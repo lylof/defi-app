@@ -1,0 +1,267 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  bio           String?
+  points        Int       @default(0)
+  role          UserRole  @default(USER)
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  participations ChallengeParticipation[]
+  leaderboard   Leaderboard?
+  badges        UserBadge[]
+  level         Level?
+  notifications Notification[]
+  comments      Comment[]
+  adminLogs     AdminLog[]
+
+  // Relations
+  challenges    Challenge[]    @relation("CreatedBy")
+  submissions   Submission[]
+  activityLogsAsTarget  ActivityLog[]  @relation("TargetUser")
+  activityLogsAsAdmin   ActivityLog[]  @relation("AdminUser")
+
+  @@map("users")
+}
+
+model Account {
+  id                 String   @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token          String?  @db.Text
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Category {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String?
+  challenges  Challenge[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Challenge {
+  id             String                   @id @default(cuid())
+  title          String
+  description    String
+  brief          String
+  points         Int
+  startDate      DateTime
+  endDate        DateTime
+  participants   Int                      @default(0)
+  categoryId     String
+  category       Category                 @relation(fields: [categoryId], references: [id])
+  files          File[]
+  participations ChallengeParticipation[]
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  // Relations
+  createdBy   User       @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById String
+  submissions Submission[]
+}
+
+model File {
+  id          String   @id @default(uuid())
+  challengeId String
+  url         String
+  name        String
+  size        Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  challenge Challenge @relation(fields: [challengeId], references: [id])
+}
+
+model ChallengeParticipation {
+  id          String   @id @default(uuid())
+  userId      String
+  challengeId String
+  submitted   Boolean  @default(false)
+  submission  String?  @db.Text
+  evaluated   Boolean  @default(false)
+  approved    Boolean  @default(false)
+  status      String   @default("PENDING")  // PENDING, COMPLETED, FAILED
+  score       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  challenge Challenge @relation(fields: [challengeId], references: [id])
+}
+
+model Leaderboard {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  points    Int      @default(0)
+  rank      Int      @default(0)
+  user      User     @relation(fields: [userId], references: [id])
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  description String
+  image       String
+  condition   String      @db.Text  // Condition d'obtention en JSON
+  points      Int         @default(0)
+  users       UserBadge[]
+  notifications Notification[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+}
+
+model Level {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  level       Int      @default(1)
+  experience  Int      @default(0)
+  nextLevel   Int      @default(100)  // Points requis pour le niveau suivant
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  content   String
+  read      Boolean  @default(false)
+  badgeId   String?
+  user      User     @relation(fields: [userId], references: [id])
+  badge     Badge?   @relation(fields: [badgeId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Comment {
+  id          String   @id @default(uuid())
+  userId      String
+  content     String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model AdminLog {
+  id        String   @id @default(cuid())
+  adminId   String
+  admin     User     @relation(fields: [adminId], references: [id])
+  action    String
+  targetId  String
+  details   String
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([targetId])
+}
+
+model Submission {
+  id          String    @id @default(cuid())
+  content     String
+  status      SubmissionStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id])
+  userId      String
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  challengeId String
+}
+
+model ActivityLog {
+  id        String      @id @default(cuid())
+  action    LogAction
+  details   String?
+  createdAt DateTime    @default(now())
+  
+  // Relations
+  admin     User        @relation("AdminUser", fields: [adminId], references: [id])
+  adminId   String
+  target    User        @relation("TargetUser", fields: [targetId], references: [id])
+  targetId  String
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LogAction {
+  UPDATE_ROLE
+  BAN
+  UNBAN
+} 
