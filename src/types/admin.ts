@@ -1,4 +1,4 @@
-import { User, UserRole, Challenge } from "@prisma/client";
+import { User, UserRole, Challenge, Category } from "@prisma/client";
 
 export interface AdminUserResponse {
   id: string;
@@ -36,6 +36,15 @@ export interface AdminStats {
     total: number;
     active: number;
     challenges: Array<Challenge & { submissionCount: number }>;
+  };
+  categories: {
+    total: number;
+    withChallenges: number;
+    mostUsed: {
+      name: string;
+      count: number;
+    } | null;
+    categories: Array<Category & { challenges: Challenge[] }>;
   };
   participationRate: number;
   monthlyStats: {

@@ -8,7 +8,8 @@ import {
   Users, 
   FolderKanban,
   Tags,
-  LogOut
+  LogOut,
+  LineChart
 } from "lucide-react";
 import { NavItem } from "@/components/admin/nav-item";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,12 @@ const navItems = [
     description: "Historique des actions administratives",
     href: "/admin/logs",
     icon: "history"
+  },
+  {
+    title: "Santé du Système",
+    description: "Surveiller l'état du système",
+    href: "/admin/health",
+    icon: "line-chart"
   }
 ] as const;
 

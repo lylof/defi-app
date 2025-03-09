@@ -99,12 +99,48 @@ export class AdminService {
     }
   }
 
+  static async getCategories() {
+    try {
+      const categories = await prisma.category.findMany({
+        include: {
+          challenges: true,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+      });
+
+      const total = categories.length;
+      const withChallenges = categories.filter(cat => cat.challenges.length > 0).length;
+      const mostUsed = categories.sort((a, b) => b.challenges.length - a.challenges.length)[0];
+
+      return {
+        total,
+        withChallenges,
+        mostUsed: mostUsed ? {
+          name: mostUsed.name,
+          count: mostUsed.challenges.length
+        } : null,
+        categories
+      };
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      return {
+        total: 0,
+        withChallenges: 0,
+        mostUsed: null,
+        categories: []
+      };
+    }
+  }
+
   static async getStats(): Promise<AdminStats> {
     try {
-      const [usersData, challengesData, participationCount] = await Promise.all([
+      const [usersData, challengesData, participationCount, categoriesData] = await Promise.all([
         this.getUsers(),
         this.getChallenges(),
-        prisma.challengeParticipation.count()
+        prisma.challengeParticipation.count(),
+        this.getCategories()
       ]);
 
       const participationRate = usersData.total > 0 
@@ -129,6 +165,7 @@ export class AdminService {
           active: usersData.total > 0 ? usersData.users.filter(u => u.isActive).length : 0
         },
         challenges: challengesData,
+        categories: categoriesData,
         participationRate,
         monthlyStats: {
           challenges: newChallenges,
@@ -140,6 +177,7 @@ export class AdminService {
       return {
         users: { total: 0, active: 0 },
         challenges: { total: 0, active: 0, challenges: [] },
+        categories: { total: 0, withChallenges: 0, mostUsed: null, categories: [] },
         participationRate: 0,
         monthlyStats: { challenges: 0, change: "+0" }
       };

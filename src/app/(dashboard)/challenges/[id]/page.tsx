@@ -1,10 +1,14 @@
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { redirect, notFound } from "next/navigation";
-import { Trophy, Clock, Tag, Users, FileText } from "lucide-react";
+import { Trophy, Tag, Users, FileText } from "lucide-react";
 import { db } from "@/lib/db";
 import Link from "next/link";
 import { ParticipateButton } from "@/components/challenges/participate-button";
+import { TimeRemaining } from "@/components/challenges/time-remaining";
+import { DifficultyBadge } from "@/components/challenges/difficulty-badge";
+import { SubmissionProgress } from "@/components/challenges/submission-progress";
+import { Challenge, File, Category, Submission } from "@prisma/client";
 
 interface ChallengePageProps {
   params: {
@@ -12,25 +16,48 @@ interface ChallengePageProps {
   };
 }
 
+// Définition des types pour la requête Prisma
+type ChallengeWithRelations = Challenge & {
+  category: Category;
+  files: File[];
+  _count: {
+    participations: number;
+  };
+  participations: {
+    id: string;
+    userId: string;
+    challengeId: string;
+    submissions: Submission[];
+  }[];
+};
+
 export async function generateMetadata({
   params,
 }: ChallengePageProps): Promise<Metadata> {
-  const challenge = await db.challenge.findUnique({
-    where: { id: params.id },
-    include: { category: true },
-  });
+  try {
+    const challenge = await db.challenge.findUnique({
+      where: { id: params.id },
+      include: { category: true },
+    });
 
-  if (!challenge) {
+    if (!challenge) {
+      return {
+        title: "Défi non trouvé | LPT Défis",
+        description: "Le défi demandé n'existe pas",
+      };
+    }
+
     return {
-      title: "Défi non trouvé | LPT Défis",
-      description: "Le défi demandé n'existe pas",
+      title: `${challenge.title} | LPT Défis`,
+      description: challenge.description,
+    };
+  } catch (error) {
+    console.error("Erreur lors de la génération des métadonnées:", error);
+    return {
+      title: "Erreur | LPT Défis",
+      description: "Une erreur est survenue lors du chargement de la page",
     };
   }
-
-  return {
-    title: `${challenge.title} | LPT Défis`,
-    description: challenge.description,
-  };
 }
 
 export default async function ChallengePage({ params }: ChallengePageProps) {
@@ -54,10 +81,12 @@ export default async function ChallengePage({ params }: ChallengePageProps) {
         where: {
           userId: session.user.id,
         },
-        take: 1,
+        include: {
+          submissions: true,
+        },
       },
     },
-  });
+  }) as ChallengeWithRelations | null;
 
   if (!challenge) {
     notFound();
@@ -65,6 +94,9 @@ export default async function ChallengePage({ params }: ChallengePageProps) {
 
   const hasParticipated = challenge.participations.length > 0;
   const isActive = new Date() >= challenge.startDate && new Date() <= challenge.endDate;
+  
+  // Nombre de soumissions actuel pour l'utilisateur
+  const currentSubmissions = hasParticipated ? challenge.participations[0].submissions.length : 0;
 
   return (
     <div className="space-y-8">
@@ -79,11 +111,14 @@ export default async function ChallengePage({ params }: ChallengePageProps) {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight">{challenge.title}</h1>
           <div className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            <span className="text-lg font-semibold">{challenge.points} points</span>
+            <DifficultyBadge points={challenge.points} />
+            <div className="flex items-center gap-1 ml-2">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              <span className="text-lg font-semibold">{challenge.points} points</span>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mt-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Tag className="h-4 w-4" />
             <span>{challenge.category.name}</span>
@@ -92,17 +127,7 @@ export default async function ChallengePage({ params }: ChallengePageProps) {
             <Users className="h-4 w-4" />
             <span>{challenge._count.participations} participants</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            <span>
-              Jusqu'au{" "}
-              {new Date(challenge.endDate).toLocaleDateString("fr-FR", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </span>
-          </div>
+          <TimeRemaining endDate={challenge.endDate} />
         </div>
       </div>
 
@@ -171,9 +196,27 @@ export default async function ChallengePage({ params }: ChallengePageProps) {
                       })}
                     </p>
                   </div>
+                  
+                  {/* Progression des soumissions */}
+                  {challenge.allowMultipleSubmissions && (
+                    <SubmissionProgress 
+                      currentSubmissions={currentSubmissions}
+                      maxSubmissions={challenge.maxSubmissions}
+                      className="mt-2 mb-4"
+                    />
+                  )}
+                  
                   <Link
                     href={`/challenges/${challenge.id}/submit`}
-                    className="w-full inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    className={`w-full inline-flex items-center justify-center rounded-md ${
+                      challenge.allowMultipleSubmissions && challenge.maxSubmissions && currentSubmissions >= challenge.maxSubmissions
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    } px-4 py-2 text-sm font-medium text-white`}
+                    {...(challenge.allowMultipleSubmissions && challenge.maxSubmissions && currentSubmissions >= challenge.maxSubmissions
+                      ? { "aria-disabled": true, onClick: (e) => e.preventDefault() }
+                      : {}
+                    )}
                   >
                     Soumettre une solution
                   </Link>
@@ -218,6 +261,37 @@ export default async function ChallengePage({ params }: ChallengePageProps) {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+          
+          {/* Informations supplémentaires */}
+          <div className="rounded-lg border shadow-sm">
+            <div className="p-6">
+              <h2 className="font-semibold mb-4">Détails du défi</h2>
+              <ul className="space-y-2 text-sm">
+                <li className="flex justify-between">
+                  <span className="text-muted-foreground">Récompense</span>
+                  <span className="font-medium">{challenge.points} points</span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-muted-foreground">Catégorie</span>
+                  <span className="font-medium">{challenge.category.name}</span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-muted-foreground">Participants</span>
+                  <span className="font-medium">{challenge._count.participations}</span>
+                </li>
+                <li className="flex justify-between">
+                  <span className="text-muted-foreground">Soumissions multiples</span>
+                  <span className="font-medium">
+                    {challenge.allowMultipleSubmissions ? (
+                      challenge.maxSubmissions ? `Oui (max. ${challenge.maxSubmissions})` : "Illimitées"
+                    ) : (
+                      "Non"
+                    )}
+                  </span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>

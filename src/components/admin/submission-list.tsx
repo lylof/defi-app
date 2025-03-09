@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileText, ExternalLink, Check, X, ListChecks } from "lucide-react";
+import { FileText, ExternalLink, Check, X, ListChecks, Eye } from "lucide-react";
 import { DetailedEvaluationForm } from "./detailed-evaluation-form";
 
 interface EvaluationCriterion {
@@ -28,6 +28,7 @@ interface Submission {
   challenge: Challenge;
   submission: string;
   updatedAt: Date;
+  status?: "PENDING" | "APPROVED" | "REJECTED";
 }
 
 interface SubmissionListProps {
@@ -101,6 +102,7 @@ export function SubmissionList({ submissions }: SubmissionListProps) {
       {submissions.map((submission) => {
         const submissionData = JSON.parse(submission.submission);
         const hasCriteria = submission.challenge.evaluationCriteria && submission.challenge.evaluationCriteria.length > 0;
+        const isEvaluated = submission.status === "APPROVED" || submission.status === "REJECTED";
 
         return (
           <div key={submission.id} className="bg-white shadow rounded-lg overflow-hidden">
@@ -154,32 +156,44 @@ export function SubmissionList({ submissions }: SubmissionListProps) {
               </div>
 
               <div className="pt-4 flex items-center justify-end gap-4">
-                <button
-                  onClick={() => handleEvaluation(submission.id, false)}
-                  disabled={evaluating === submission.id}
-                  className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Refuser
-                </button>
-                {hasCriteria && (
-                  <button
-                    onClick={() => openDetailedEvaluation(submission.id, submission.challenge.evaluationCriteria)}
-                    disabled={evaluating === submission.id}
-                    className="inline-flex items-center justify-center rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50"
+                {isEvaluated ? (
+                  <Link
+                    href={`/admin/submissions/${submission.id}`}
+                    className="inline-flex items-center justify-center rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
                   >
-                    <ListChecks className="mr-2 h-4 w-4" />
-                    Évaluation détaillée
-                  </button>
+                    <Eye className="mr-2 h-4 w-4" />
+                    Voir les détails
+                  </Link>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleEvaluation(submission.id, false)}
+                      disabled={evaluating === submission.id}
+                      className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Refuser
+                    </button>
+                    {hasCriteria && (
+                      <button
+                        onClick={() => openDetailedEvaluation(submission.id, submission.challenge.evaluationCriteria)}
+                        disabled={evaluating === submission.id}
+                        className="inline-flex items-center justify-center rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50"
+                      >
+                        <ListChecks className="mr-2 h-4 w-4" />
+                        Évaluation détaillée
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleEvaluation(submission.id, true)}
+                      disabled={evaluating === submission.id}
+                      className="inline-flex items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
+                    >
+                      <Check className="mr-2 h-4 w-4" />
+                      Approuver
+                    </button>
+                  </>
                 )}
-                <button
-                  onClick={() => handleEvaluation(submission.id, true)}
-                  disabled={evaluating === submission.id}
-                  className="inline-flex items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  Approuver
-                </button>
               </div>
             </div>
           </div>

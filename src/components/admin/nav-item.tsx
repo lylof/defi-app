@@ -11,11 +11,32 @@ import {
   Tags,
   ClipboardCheck,
   Award,
-  History
+  History,
+  LineChart,
+  Activity,
+  BarChart,
+  ServerCrash,
+  Shield,
+  FileSearch,
+  Gauge
 } from "lucide-react";
 
 // Type pour les noms d'icônes supportées
-type IconName = "layout-dashboard" | "users" | "folder-kanban" | "tags" | "clipboard-check" | "award" | "history";
+type IconName = 
+  | "layout-dashboard" 
+  | "users" 
+  | "folder-kanban" 
+  | "tags" 
+  | "clipboard-check" 
+  | "award" 
+  | "history"
+  | "line-chart"
+  | "activity"
+  | "bar-chart"
+  | "server-crash"
+  | "shield"
+  | "file-search"
+  | "gauge";
 
 // Mapping des noms d'icônes vers les composants
 const iconMap: Record<IconName, LucideIcon> = {
@@ -25,7 +46,14 @@ const iconMap: Record<IconName, LucideIcon> = {
   "tags": Tags,
   "clipboard-check": ClipboardCheck,
   "award": Award,
-  "history": History
+  "history": History,
+  "line-chart": LineChart,
+  "activity": Activity,
+  "bar-chart": BarChart,
+  "server-crash": ServerCrash,
+  "shield": Shield,
+  "file-search": FileSearch,
+  "gauge": Gauge
 };
 
 interface NavItemProps {

@@ -8,7 +8,9 @@ import {
   Users, 
   Trophy,
   Activity,
-  Calendar
+  Calendar,
+  Tag,
+  FolderTree
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,13 @@ export default async function AdminDashboard() {
         changeType: "info"
       },
       {
+        name: "Catégories",
+        value: stats.categories.total,
+        icon: Tag,
+        change: `${stats.categories.withChallenges} utilisées`,
+        changeType: "info"
+      },
+      {
         name: "Taux de Participation",
         value: `${stats.participationRate}%`,
         icon: Activity,
@@ -62,7 +71,7 @@ export default async function AdminDashboard() {
 
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {statCards.map((stat) => {
             const Icon = stat.icon;
             return (
@@ -84,8 +93,41 @@ export default async function AdminDashboard() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-1">
+            <CardHeader>
+              <CardTitle>Catégories Populaires</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {stats.categories.mostUsed ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <FolderTree className="h-4 w-4 text-primary" />
+                      <span className="font-medium">{stats.categories.mostUsed.name}</span>
+                    </div>
+                    <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">
+                      {stats.categories.mostUsed.count} défis
+                    </span>
+                  </div>
+                  
+                  <div className="text-sm text-muted-foreground">
+                    {stats.categories.withChallenges} catégories sur {stats.categories.total} sont utilisées par au moins un défi.
+                  </div>
+                  
+                  <Button variant="outline" size="sm" className="w-full" asChild>
+                    <Link href="/admin/categories">
+                      Gérer les catégories
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Aucune catégorie avec des défis</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="lg:col-span-1">
             <CardHeader>
               <CardTitle>Activités Récentes</CardTitle>
             </CardHeader>
@@ -103,6 +145,12 @@ export default async function AdminDashboard() {
                             ? "Modification de rôle"
                             : log.action === "BAN"
                             ? "Suspension d'utilisateur"
+                            : log.action === "CREATE_CATEGORY"
+                            ? "Création de catégorie"
+                            : log.action === "UPDATE_CATEGORY"
+                            ? "Modification de catégorie"
+                            : log.action === "DELETE_CATEGORY"
+                            ? "Suppression de catégorie"
                             : "Réactivation d'utilisateur"
                           }
                         </p>
@@ -122,7 +170,7 @@ export default async function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="lg:col-span-1">
             <CardHeader>
               <CardTitle>Actions Rapides</CardTitle>
             </CardHeader>
