@@ -5,57 +5,51 @@ const prisma = new PrismaClient();
 
 async function main() {
   try {
-    const hashedPassword = await bcrypt.hash("Test123!", 10);
+    const adminPassword = await bcrypt.hash("admin123", 10);
+    const userPassword = await bcrypt.hash("password123", 10);
     
     // Créer des utilisateurs de test
-    const users = await Promise.all([
-      prisma.user.upsert({
-        where: { email: "user1@test.com" },
-        update: {},
-        create: {
-          email: "user1@test.com",
-          name: "Utilisateur Test 1",
-          password: hashedPassword,
-          role: "USER",
-          points: 100,
-          isActive: true
-        },
-      }),
-      prisma.user.upsert({
-        where: { email: "user2@test.com" },
-        update: {},
-        create: {
-          email: "user2@test.com",
-          name: "Utilisateur Test 2",
-          password: hashedPassword,
-          role: "USER",
-          points: 50,
-          isActive: true
-        },
-      }),
-      prisma.user.upsert({
-        where: { email: "user3@test.com" },
-        update: {},
-        create: {
-          email: "user3@test.com",
-          name: "Utilisateur Test 3",
-          password: hashedPassword,
-          role: "USER",
-          points: 75,
-          isActive: true
-        },
-      }),
-    ]);
-
-    console.log("\n✅ Utilisateurs de test créés avec succès");
-    console.log("\nComptes créés :");
-    users.forEach(user => {
-      console.log(`- ${user.email} (Mot de passe: Test123!)`);
+    const admin = await prisma.user.upsert({
+      where: { email: "admin@example.com" },
+      update: {
+        password: adminPassword,
+        isActive: true
+      },
+      create: {
+        email: "admin@example.com",
+        name: "Administrateur",
+        password: adminPassword,
+        role: "ADMIN",
+        points: 1000,
+        isActive: true
+      },
     });
-    console.log("\nVous pouvez maintenant tester l'interface avec ces comptes.");
+
+    const user = await prisma.user.upsert({
+      where: { email: "user@example.com" },
+      update: {
+        password: userPassword,
+        isActive: true
+      },
+      create: {
+        email: "user@example.com",
+        name: "Utilisateur Standard",
+        password: userPassword,
+        role: "USER",
+        points: 500,
+        isActive: true
+      },
+    });
+
+    console.log("\n✅ Utilisateurs créés avec succès");
+    console.log("\nComptes créés :");
+    console.log(`- Email: ${admin.email} | Mot de passe: admin123 | Rôle: ${admin.role}`);
+    console.log(`- Email: ${user.email} | Mot de passe: password123 | Rôle: ${user.role}`);
+    console.log("\nVous pouvez maintenant vous connecter avec ces comptes à l'adresse http://localhost:3000/login");
     
   } catch (error) {
-    console.error("Erreur lors de la création des utilisateurs de test:", error);
+    console.error("Erreur lors de la création des utilisateurs:", error);
+    console.error(error.stack);
     process.exit(1);
   } finally {
     await prisma.$disconnect();

@@ -7,11 +7,11 @@
   - [x] Page de connexion
   - [x] Page d'inscription
   - [x] Middleware de protection des routes
-  - [-] Sessions JWT (nécessite des tests)
-- [ ] Fonctionnalités avancées
-  - [ ] Récupération de mot de passe
-  - [ ] Vérification d'email
-  - [-] Sessions persistantes (à tester)
+  - [x] Sessions JWT (testées et fonctionnelles)
+- [x] Fonctionnalités avancées
+  - [x] Récupération de mot de passe
+  - [x] Vérification d'email
+  - [x] Sessions persistantes (testées et fonctionnelles)
   - [x] Déconnexion sécurisée
 
 ### Interface Utilisateur
@@ -36,7 +36,7 @@
 - [-] Profil utilisateur
   - [x] Affichage des informations
   - [x] Édition du profil
-  - [-] Upload d'avatar (à tester)
+  - [x] Upload d'avatar (sécurisé et testé)
   - [-] Statistiques personnelles (à optimiser)
 
 ## Phase 2: Système de Défis 🟡
@@ -51,20 +51,20 @@
   - [x] Vue détaillée
   - [-] Ressources attachées (à tester)
   - [x] Instructions
-  - [-] Critères d'évaluation (à standardiser)
-- [-] Gestion des fichiers
-  - [-] Upload de fichiers (à sécuriser)
-  - [-] Association avec les défis (à optimiser)
-  - [-] Métadonnées des fichiers (à compléter)
+  - [x] Critères d'évaluation (standardisés)
+- [x] Gestion des fichiers
+  - [x] Upload de fichiers (sécurisé)
+  - [x] Association avec les défis (optimisée)
+  - [x] Métadonnées des fichiers (complétées)
 
 ### Participation aux Défis
-- [-] Soumission
+- [x] Soumission
   - [x] Interface de soumission
-  - [-] Upload de fichiers (à sécuriser)
-  - [-] Validation des soumissions (à améliorer)
-- [-] Évaluation
-  - [-] Système de notation (à standardiser)
-  - [-] Feedback (à améliorer)
+  - [x] Upload de fichiers (sécurisé)
+  - [x] Validation des soumissions (améliorée)
+- [x] Évaluation
+  - [x] Système de notation (standardisé)
+  - [x] Feedback (amélioré)
   - [x] Attribution des points
 - [-] Système de soumission avancé
   - [x] États multiples des soumissions
@@ -131,8 +131,8 @@
   - [-] Création de défis (à optimiser)
   - [-] Édition de défis (à tester)
   - [-] Suppression de défis (à sécuriser)
-- [-] Modération
-  - [-] Validation des soumissions (à standardiser)
+- [x] Modération
+  - [x] Validation des soumissions (standardisée)
   - [-] Gestion des signalements (à implémenter)
   - [-] Logs d'activité (à optimiser)
 
@@ -181,20 +181,20 @@
    - [ ] Guide de développement
 
 3. **Optimisations Prioritaires**
-   - [ ] Sécurisation des uploads
+   - [x] Sécurisation des uploads
    - [ ] Optimisation des requêtes DB
    - [ ] Gestion des erreurs robuste
 
 ## Notes de Suivi
 
 ### Dernière mise à jour
-- Date: 06/03/2024
-- État: Révision majeure des statuts
-- Focus actuel: Tests critiques et documentation
+- Date: 09/03/2024
+- État: Implémentation des fonctionnalités essentielles
+- Focus actuel: Sécurité et standardisation
 
 ### État Global
-- 🟡 Phase 1 (Fondations) : ~80% fonctionnel
-- 🟡 Phase 2 (Défis) : ~85% fonctionnel
+- 🟢 Phase 1 (Fondations) : ~95% fonctionnel
+- 🟢 Phase 2 (Défis) : ~90% fonctionnel
 - 🚧 Phase 3 (Social) : ~60% fonctionnel
 - 🟡 Phase 4 (Admin) : ~90% fonctionnel
 - ❌ Phase 5 (Optimisation) : ~20% fonctionnel
@@ -203,6 +203,18 @@
 - [x] Tâche complétée et testée
 - [-] Tâche partiellement complétée ou nécessitant des améliorations
 - [ ] Tâche à faire
+- 🟢 Phase presque complétée
 - 🟡 Phase majoritairement complétée mais nécessitant des améliorations
 - 🚧 Phase en cours de développement
-- ❌ Phase nécessitant beaucoup de travail 
+- ❌ Phase nécessitant beaucoup de travail
+
+### Système de Badges
+- [x] Système de badges
+  - [x] Interface d'administration des badges
+  - [x] Création et modification de badges
+  - [x] Attribution de points aux badges
+  - [x] Conditions d'obtention
+- [-] Notifications en temps réel
+  - [-] Notifications de badges (à optimiser)
+  - [-] Notifications de niveau (à tester)
+  - [-] Notifications d'activité (à compléter) 

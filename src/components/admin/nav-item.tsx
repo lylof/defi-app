@@ -8,11 +8,14 @@ import {
   LayoutDashboard,
   Users,
   FolderKanban,
-  Tags
+  Tags,
+  ClipboardCheck,
+  Award,
+  History
 } from "lucide-react";
 
 // Type pour les noms d'icônes supportées
-type IconName = "layout-dashboard" | "users" | "folder-kanban" | "tags";
+type IconName = "layout-dashboard" | "users" | "folder-kanban" | "tags" | "clipboard-check" | "award" | "history";
 
 // Mapping des noms d'icônes vers les composants
 const iconMap: Record<IconName, LucideIcon> = {
@@ -20,6 +23,9 @@ const iconMap: Record<IconName, LucideIcon> = {
   "users": Users,
   "folder-kanban": FolderKanban,
   "tags": Tags,
+  "clipboard-check": ClipboardCheck,
+  "award": Award,
+  "history": History
 };
 
 interface NavItemProps {

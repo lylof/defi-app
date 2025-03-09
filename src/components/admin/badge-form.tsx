@@ -1,179 +1,184 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Upload, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
+// Schéma de validation pour le badge
 const badgeSchema = z.object({
-  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-  description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
-  image: z.string().url("L'URL de l'image doit être valide"),
-  condition: z.string().min(10, "La condition doit être décrite en détail"),
-  points: z.number().min(0, "Les points doivent être positifs"),
+  name: z.string().min(2, "Le nom doit contenir au moins 2 caractères").max(50, "Le nom ne peut pas dépasser 50 caractères"),
+  description: z.string().min(10, "La description doit contenir au moins 10 caractères").max(500, "La description ne peut pas dépasser 500 caractères"),
+  image: z.string().url("L'URL de l'image n'est pas valide").optional().or(z.literal("")),
+  points: z.coerce.number().int("Les points doivent être un nombre entier").min(0, "Les points ne peuvent pas être négatifs"),
+  condition: z.string().min(5, "La condition doit contenir au moins 5 caractères").max(1000, "La condition ne peut pas dépasser 1000 caractères"),
 });
 
-type BadgeFormData = z.infer<typeof badgeSchema>;
+type BadgeFormValues = z.infer<typeof badgeSchema>;
 
 interface BadgeFormProps {
   badge?: {
     id: string;
     name: string;
     description: string;
-    image: string;
-    condition: string;
+    image: string | null;
     points: number;
+    condition: string;
   };
 }
 
-export function BadgeForm({ badge }: BadgeFormProps) {
+export function BadgeForm({ badge }: BadgeFormProps = {}) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<BadgeFormData>({
+  // Initialiser le formulaire avec les valeurs par défaut
+  const form = useForm<BadgeFormValues>({
     resolver: zodResolver(badgeSchema),
-    defaultValues: badge || {
-      points: 0,
+    defaultValues: {
+      name: badge?.name || "",
+      description: badge?.description || "",
+      image: badge?.image || "",
+      points: badge?.points || 0,
+      condition: badge?.condition || "",
     },
   });
 
-  const onSubmit = async (data: BadgeFormData) => {
+  // Fonction de soumission du formulaire
+  async function onSubmit(values: BadgeFormValues) {
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
-      setError(null);
-
-      const response = await fetch("/api/badges" + (badge ? `/${badge.id}` : ""), {
+      const response = await fetch(badge ? `/api/badges/${badge.id}` : "/api/badges", {
         method: badge ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(values),
       });
 
       if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || "Une erreur est survenue");
+        const error = await response.json();
+        throw new Error(error.message || "Une erreur est survenue");
       }
 
+      toast.success(badge ? "Badge mis à jour avec succès" : "Badge créé avec succès");
+      router.push("/admin/badges");
       router.refresh();
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Une erreur est survenue lors de la création du badge");
-      }
+    } catch (error) {
+      console.error("Erreur lors de la soumission :", error);
+      toast.error(error instanceof Error ? error.message : "Une erreur est survenue");
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-          {error}
-        </div>
-      )}
-
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium">
-            Nom du badge
-          </label>
-          <input
-            {...register("name")}
-            id="name"
-            type="text"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          {errors.name && (
-            <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nom du badge</FormLabel>
+              <FormControl>
+                <Input placeholder="Nom du badge" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-        </div>
+        />
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium">
-            Description
-          </label>
-          <textarea
-            {...register("description")}
-            id="description"
-            rows={3}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          {errors.description && (
-            <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Description du badge"
+                  className="min-h-32"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-        </div>
+        />
 
-        <div>
-          <label htmlFor="image" className="block text-sm font-medium">
-            URL de l'image
-          </label>
-          <input
-            {...register("image")}
-            id="image"
-            type="url"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          {errors.image && (
-            <p className="mt-1 text-sm text-red-600">{errors.image.message}</p>
+        <FormField
+          control={form.control}
+          name="image"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>URL de l'image (optionnelle)</FormLabel>
+              <FormControl>
+                <Input placeholder="https://exemple.com/image.png" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-        </div>
+        />
 
-        <div>
-          <label htmlFor="condition" className="block text-sm font-medium">
-            Condition d'obtention
-          </label>
-          <textarea
-            {...register("condition")}
-            id="condition"
-            rows={3}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          {errors.condition && (
-            <p className="mt-1 text-sm text-red-600">{errors.condition.message}</p>
+        <FormField
+          control={form.control}
+          name="points"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Points</FormLabel>
+              <FormControl>
+                <Input type="number" min="0" step="1" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-        </div>
+        />
 
-        <div>
-          <label htmlFor="points" className="block text-sm font-medium">
-            Points
-          </label>
-          <input
-            {...register("points", { valueAsNumber: true })}
-            id="points"
-            type="number"
-            min="0"
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          {errors.points && (
-            <p className="mt-1 text-sm text-red-600">{errors.points.message}</p>
+        <FormField
+          control={form.control}
+          name="condition"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Condition d'obtention</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Condition d'obtention du badge (ex: Compléter 5 défis)"
+                  className="min-h-32"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
-        </div>
-      </div>
+        />
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50"
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {badge ? "Mise à jour..." : "Création..."}
-          </>
-        ) : (
-          badge ? "Mettre à jour le badge" : "Créer le badge"
-        )}
-      </button>
-    </form>
+        <div className="flex justify-end space-x-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/admin/badges")}
+            disabled={isSubmitting}
+          >
+            Annuler
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Enregistrement..." : badge ? "Mettre à jour" : "Créer"}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 } 

@@ -4,11 +4,25 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import * as z from "zod";
 
+// Enhanced schema to match the form
 const challengeSchema = z.object({
   title: z.string().min(3),
   description: z.string().min(10),
   categoryId: z.string().min(1),
   points: z.coerce.number().min(1),
+  startDate: z.date(),
+  endDate: z.date(),
+  brief: z.string().max(150).optional(),
+  isPublished: z.boolean().default(false),
+  allowMultipleSubmissions: z.boolean().default(false),
+  maxSubmissions: z.coerce.number().min(1).optional(),
+  evaluationCriteria: z.array(
+    z.object({
+      name: z.string().min(1),
+      description: z.string().min(1),
+      weight: z.coerce.number().min(1),
+    })
+  ).optional(),
 });
 
 export async function POST(req: Request) {
@@ -34,11 +48,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Créer le défi avec des dates par défaut
-    const now = new Date();
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 30); // Par défaut, le défi dure 30 jours
-
     // Vérifier si la colonne createdById existe
     const hasCreatedById = await checkIfColumnExists('Challenge', 'createdById');
 
@@ -46,12 +55,15 @@ export async function POST(req: Request) {
     const challengeData: any = {
       title: body.title,
       description: body.description,
-      brief: body.description.substring(0, 100) + "...", // Créer un résumé automatique
+      brief: body.brief || body.description.substring(0, 100) + "...", // Utiliser le brief fourni ou générer un résumé
       points: body.points,
       categoryId: body.categoryId,
-      startDate: now,
-      endDate: endDate,
-      participants: 0 // Valeur par défaut
+      startDate: body.startDate,
+      endDate: body.endDate,
+      participants: 0, // Valeur par défaut
+      isPublished: body.isPublished,
+      allowMultipleSubmissions: body.allowMultipleSubmissions,
+      maxSubmissions: body.allowMultipleSubmissions ? body.maxSubmissions : null,
     };
 
     // Ajouter createdById seulement si la colonne existe
@@ -59,11 +71,39 @@ export async function POST(req: Request) {
       challengeData.createdById = session.user.id;
     }
 
-    const challenge = await prisma.challenge.create({
-      data: challengeData,
-      include: {
-        category: true,
-      },
+    // Utiliser une transaction pour créer le défi et ses critères d'évaluation
+    const challenge = await prisma.$transaction(async (tx) => {
+      // Créer le défi
+      const newChallenge = await tx.challenge.create({
+        data: challengeData,
+        include: {
+          category: true,
+        },
+      });
+
+      // Créer les critères d'évaluation si fournis
+      if (body.evaluationCriteria && body.evaluationCriteria.length > 0) {
+        // Vérifier si la table EvaluationCriteria existe
+        const hasEvaluationCriteriaTable = await checkIfTableExists('EvaluationCriteria');
+        
+        if (hasEvaluationCriteriaTable) {
+          // Créer chaque critère d'évaluation
+          for (const criterion of body.evaluationCriteria) {
+            await tx.evaluationCriteria.create({
+              data: {
+                name: criterion.name,
+                description: criterion.description,
+                weight: criterion.weight,
+                challengeId: newChallenge.id,
+              },
+            });
+          }
+        } else {
+          console.warn("La table EvaluationCriteria n'existe pas, les critères ne seront pas enregistrés");
+        }
+      }
+
+      return newChallenge;
     });
 
     // Créer un log d'administration si possible
@@ -71,7 +111,12 @@ export async function POST(req: Request) {
       await prisma.adminLog.create({
         data: {
           action: "CREATE_CHALLENGE",
-          details: JSON.stringify({ challengeId: challenge.id, title: challenge.title }),
+          details: JSON.stringify({ 
+            challengeId: challenge.id, 
+            title: challenge.title,
+            isPublished: body.isPublished,
+            hasCriteria: body.evaluationCriteria && body.evaluationCriteria.length > 0
+          }),
           adminId: session.user.id,
           targetId: challenge.id,
         }
@@ -108,13 +153,19 @@ export async function GET() {
 
     // Vérifier si la colonne createdById existe
     const hasCreatedById = await checkIfColumnExists('Challenge', 'createdById');
+    
+    // Vérifier si la table EvaluationCriteria existe
+    const hasEvaluationCriteriaTable = await checkIfTableExists('EvaluationCriteria');
 
     const challenges = await prisma.challenge.findMany({
       include: {
         category: true,
         participations: {
           select: { id: true }
-        }
+        },
+        ...(hasEvaluationCriteriaTable ? {
+          evaluationCriteria: true
+        } : {})
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -145,6 +196,25 @@ async function checkIfColumnExists(table: string, column: string): Promise<boole
     return result[0]?.exists || false;
   } catch (error) {
     console.error(`Error checking if column ${column} exists in table ${table}:`, error);
+    return false;
+  }
+}
+
+// Fonction utilitaire pour vérifier si une table existe
+async function checkIfTableExists(table: string): Promise<boolean> {
+  try {
+    // Cette requête est spécifique à PostgreSQL
+    const result: any = await prisma.$queryRaw`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_name = ${table}
+      );
+    `;
+    
+    return result[0]?.exists || false;
+  } catch (error) {
+    console.error(`Error checking if table ${table} exists:`, error);
     return false;
   }
 } 

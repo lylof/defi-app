@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { db } from "@/lib/db";
-import { writeFile } from "fs/promises";
-import { join } from "path";
-import * as z from "zod";
+import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import { FileUploadService } from "@/lib/uploads/file-upload-service";
 
+// Schéma de validation pour la soumission
 const submissionSchema = z.object({
-  description: z.string().min(10),
-  repositoryUrl: z.string().url().optional(),
+  description: z.string().min(10, "La description doit contenir au moins 10 caractères"),
+  repositoryUrl: z.string().url("L'URL doit être valide").optional(),
 });
 
 export async function POST(
@@ -17,13 +17,14 @@ export async function POST(
   try {
     const session = await getServerSession();
 
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Non autorisé" },
         { status: 401 }
       );
     }
 
+    // Récupérer les données du formulaire
     const formData = await req.formData();
     const description = formData.get("description") as string;
     const repositoryUrl = formData.get("repositoryUrl") as string | null;
@@ -35,15 +36,12 @@ export async function POST(
       repositoryUrl: repositoryUrl || undefined,
     });
 
-    // Vérifier si le défi existe et est actif
-    const challenge = await db.challenge.findUnique({
+    // Récupérer le défi
+    const challenge = await prisma.challenge.findUnique({
       where: { id: params.id },
       include: {
         participations: {
-          where: {
-            userId: session.user.id,
-          },
-          take: 1,
+          where: { userId: session.user.id },
         },
       },
     });
@@ -55,17 +53,9 @@ export async function POST(
       );
     }
 
-    // Vérifier si le défi est toujours actif
-    const now = new Date();
-    if (now < challenge.startDate || now > challenge.endDate) {
-      return NextResponse.json(
-        { error: "Le défi n'est plus disponible" },
-        { status: 400 }
-      );
-    }
-
     // Vérifier si l'utilisateur participe au défi
     const hasParticipated = challenge.participations.length > 0;
+
     if (!hasParticipated) {
       return NextResponse.json(
         { error: "Vous ne participez pas à ce défi" },
@@ -76,33 +66,40 @@ export async function POST(
     // Gérer les fichiers
     const uploadedFiles = [];
     if (files.length > 0) {
-      const uploadDir = join(process.cwd(), "public/submissions", params.id);
-      
-      for (const file of files) {
-        // Vérifier la taille du fichier (max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-          return NextResponse.json(
-            { error: "Les fichiers ne doivent pas dépasser 10MB" },
-            { status: 400 }
-          );
+      // Utiliser le service d'upload de fichiers pour valider et télécharger les fichiers
+      const uploadResults = await FileUploadService.uploadMultipleFiles(
+        files,
+        session.user.id,
+        `submissions/${params.id}`,
+        { 
+          category: "any", 
+          maxSize: 20 * 1024 * 1024 // 20MB max par fichier
         }
+      );
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        const fileName = `${session.user.id}-${Date.now()}-${file.name}`;
-        const filePath = join(uploadDir, fileName);
-
-        await writeFile(filePath, buffer);
-        uploadedFiles.push({
-          name: file.name,
-          path: `/submissions/${params.id}/${fileName}`,
-          size: file.size,
-        });
+      // Vérifier si tous les uploads ont réussi
+      const failedUploads = uploadResults.filter(result => !result.success);
+      if (failedUploads.length > 0) {
+        return NextResponse.json(
+          { 
+            error: "Certains fichiers n'ont pas pu être téléchargés", 
+            details: failedUploads.map(f => f.error)
+          },
+          { status: 400 }
+        );
       }
+
+      // Ajouter les fichiers téléchargés à la liste
+      uploadedFiles.push(...uploadResults.map(result => ({
+        name: result.fileName,
+        path: result.publicUrl,
+        size: result.fileSize,
+        type: result.fileType
+      })));
     }
 
     // Mettre à jour la participation
-    const participation = await db.challengeParticipation.update({
+    const participation = await prisma.challengeParticipation.update({
       where: {
         id: challenge.participations[0].id,
       },
@@ -126,7 +123,7 @@ export async function POST(
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides" },
+        { error: "Données invalides", details: error.errors },
         { status: 400 }
       );
     }

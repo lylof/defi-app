@@ -1,99 +1,112 @@
-import { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-import { authOptions } from "@/lib/auth";
-import { db } from "@/lib/db";
+import React from "react";
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-export const metadata: Metadata = {
-  title: "Gestion des Défis",
-  description: "Interface de gestion des défis",
+export const metadata = {
+  title: "Gestion des Défis | LPT Défis",
 };
 
-export default async function ChallengesPage() {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user || session.user.role !== "ADMIN") {
-    redirect("/login");
-  }
-
-  try {
-    const challenges = await db.challenge.findMany({
-      include: {
-        category: true,
-        _count: {
-          select: {
-            participations: true,
-          },
+async function getChallenges() {
+  return await prisma.challenge.findMany({
+    include: {
+      category: true,
+      participations: true,
+      createdBy: {
+        select: {
+          name: true,
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
 
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Gestion des Défis</h1>
-          <Link
-            href="/admin/challenges/new"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
-          >
+export default async function ChallengesPage() {
+  const challenges = await getChallenges();
+
+  return (
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">Gestion des Défis</h1>
+        <Link href="/admin/challenges/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
             Nouveau Défi
-          </Link>
-        </div>
+          </Button>
+        </Link>
+      </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Liste des Défis</h2>
-            {challenges.length > 0 ? (
-              <div className="space-y-4">
-                {challenges.map((challenge) => (
-                  <div
-                    key={challenge.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div>
-                      <h3 className="font-medium">{challenge.title}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {challenge.category.name} • {challenge._count.participations} participants
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/admin/challenges/${challenge.id}`}
-                        className="text-sm text-blue-500 hover:underline"
-                      >
-                        Voir
-                      </Link>
-                      <Link
-                        href={`/admin/challenges/${challenge.id}/edit`}
-                        className="text-sm text-blue-500 hover:underline"
-                      >
-                        Modifier
-                      </Link>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-8">
-                Aucun défi n'a été créé pour le moment
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  } catch (error) {
-    console.error("Error loading challenges:", error);
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-500">
-          Une erreur est survenue lors du chargement des défis. Veuillez réessayer plus tard.
-        </p>
-      </div>
-    );
-  }
+      <Card>
+        <CardHeader>
+          <CardTitle>Liste des Défis</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Titre</TableHead>
+                <TableHead>Catégorie</TableHead>
+                <TableHead>Points</TableHead>
+                <TableHead>Participants</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Date de création</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {challenges.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4">
+                    Aucun défi trouvé
+                  </TableCell>
+                </TableRow>
+              ) : (
+                challenges.map((challenge) => (
+                  <TableRow key={challenge.id}>
+                    <TableCell className="font-medium">{challenge.title}</TableCell>
+                    <TableCell>{challenge.category.name}</TableCell>
+                    <TableCell>{challenge.points}</TableCell>
+                    <TableCell>{challenge.participations.length}</TableCell>
+                    <TableCell>
+                      {challenge.isPublished ? (
+                        <Badge variant="success">Publié</Badge>
+                      ) : (
+                        <Badge variant="secondary">Brouillon</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {format(new Date(challenge.createdAt), "dd MMMM yyyy", { locale: fr })}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Link href={`/admin/challenges/${challenge.id}`}>
+                          <Button variant="outline" size="sm">
+                            Voir
+                          </Button>
+                        </Link>
+                        <Link href={`/admin/challenges/${challenge.id}/edit`}>
+                          <Button variant="outline" size="sm">
+                            Modifier
+                          </Button>
+                        </Link>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

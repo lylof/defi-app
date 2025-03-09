@@ -5,19 +5,30 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
   password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  rememberMe: z.boolean().optional().default(false),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState<boolean>(false);
+  
+  useEffect(() => {
+    // Vérifier si la session a expiré
+    const expired = searchParams.get("expired") === "true";
+    if (expired) {
+      setSessionExpired(true);
+    }
+  }, [searchParams]);
   
   const {
     register,
@@ -25,6 +36,9 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    defaultValues: {
+      rememberMe: false,
+    },
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -32,6 +46,7 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
+        rememberMe: data.rememberMe.toString(),
         redirect: false,
       });
 
@@ -76,6 +91,11 @@ export default function LoginPage() {
               {error}
             </div>
           )}
+          {sessionExpired && (
+            <div className="bg-amber-100 border border-amber-400 text-amber-700 px-4 py-3 rounded relative">
+              Votre session a expiré. Veuillez vous reconnecter.
+            </div>
+          )}
           <div className="grid gap-6">
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="grid gap-4">
@@ -103,6 +123,27 @@ export default function LoginPage() {
                   {errors.password && (
                     <p className="text-red-500 text-sm">{errors.password.message}</p>
                   )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <input
+                      {...register("rememberMe")}
+                      id="rememberMe"
+                      type="checkbox"
+                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                    />
+                    <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+                      Se souvenir de moi
+                    </label>
+                  </div>
+                  <div className="text-right">
+                    <Link
+                      href="/forgot-password"
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Mot de passe oublié ?
+                    </Link>
+                  </div>
                 </div>
                 <button
                   type="submit"

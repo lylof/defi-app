@@ -44,6 +44,24 @@ const navItems = [
     description: "Organiser les défis par catégorie",
     href: "/admin/categories",
     icon: "tags"
+  },
+  {
+    title: "Soumissions",
+    description: "Évaluer les soumissions des participants",
+    href: "/admin/submissions",
+    icon: "clipboard-check"
+  },
+  {
+    title: "Badges",
+    description: "Gérer les badges et récompenses",
+    href: "/admin/badges",
+    icon: "award"
+  },
+  {
+    title: "Logs d'activité",
+    description: "Historique des actions administratives",
+    href: "/admin/logs",
+    icon: "history"
   }
 ] as const;
 

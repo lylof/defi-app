@@ -1,6 +1,6 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { SubmissionList } from "@/components/admin/submission-list";
 
 export default async function SubmissionsPage() {
@@ -11,10 +11,10 @@ export default async function SubmissionsPage() {
   }
 
   // Récupérer toutes les soumissions en attente
-  const submissions = await db.challengeParticipation.findMany({
+  const participations = await prisma.challengeParticipation.findMany({
     where: {
       submitted: true,
-      // Ajouter d'autres filtres si nécessaire
+      evaluated: false, // Seulement les soumissions non évaluées
     },
     include: {
       user: {
@@ -27,6 +27,7 @@ export default async function SubmissionsPage() {
         select: {
           title: true,
           points: true,
+          evaluationCriteria: true, // Inclure les critères d'évaluation
         },
       },
     },
@@ -34,6 +35,17 @@ export default async function SubmissionsPage() {
       updatedAt: "desc",
     },
   });
+
+  // Transformer les participations en soumissions pour le composant SubmissionList
+  const submissions = participations
+    .filter(p => p.submission !== null) // Filtrer les participations sans soumission
+    .map(p => ({
+      id: p.id,
+      user: p.user,
+      challenge: p.challenge,
+      submission: p.submission as string, // Cast pour assurer que ce n'est pas null
+      updatedAt: p.updatedAt,
+    }));
 
   return (
     <div className="space-y-8">

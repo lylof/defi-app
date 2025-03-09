@@ -1,45 +1,21 @@
-import { PrismaClient } from "@prisma/client";
+import { DatabaseService } from './database/database-service';
 
-// Type pour le cache global de Prisma
-declare global {
-  var cachedPrisma: PrismaClient | undefined;
-}
+// Initialisation du service de base de données
+const databaseService = DatabaseService.getInstance();
 
-/**
- * Configuration et options du client Prisma
- * Activation des logs en développement pour faciliter le debugging
- */
-const prismaClientOptions = process.env.NODE_ENV === "development" 
-  ? {
-      log: ["query", "error", "warn"],
-    }
-  : {};
+// Export de l'instance Prisma avec gestion des erreurs
+export const db = databaseService.getPrisma();
 
-/**
- * Initialisation du client Prisma avec gestion du cache en développement
- * Pour éviter la création de multiples connexions en mode développement
- */
-let db: PrismaClient;
-
-if (process.env.NODE_ENV === "production") {
-  db = new PrismaClient(prismaClientOptions);
-} else {
-  if (!global.cachedPrisma) {
-    global.cachedPrisma = new PrismaClient(prismaClientOptions);
-  }
-  db = global.cachedPrisma;
-}
-
-// Gestion des erreurs de connexion
-db.$connect()
+// Gestion de la connexion initiale
+databaseService.connect()
   .catch((error) => {
-    console.error("Erreur de connexion à la base de données:", error);
-    process.exit(1);
+    console.error('Failed to initialize database connection:', error);
   });
 
 // Gestion propre de la fermeture de connexion
-process.on("beforeExit", async () => {
-  await db.$disconnect();
+process.on('beforeExit', async () => {
+  await databaseService.disconnect();
 });
 
-export { db };
+// Export du service pour les opérations avancées
+export { databaseService };

@@ -1,0 +1,93 @@
+---
+description: A set of best practices for Next.js, TypeScript, and Tailwind CSS aimed at improving performance, maintainability, and code quality.
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+Before diving into the best practices, please note that you may need to adapt the globs depending on your project's structure.
+
+---
+name: nextjs-best-practices.mdc
+description: Best practices for Next.js applications and routing
+globs: **/*.{ts,tsx}
+---
+
+- Utilize Next.js 15's App Router for improved performance and easier routing.
+- Leverage Server Components for better data fetching and reduced client-side JavaScript.
+- Implement proper error handling with error boundaries and the `error.js` file.
+- Use Next.js API routes for serverless backend functionality.
+- Optimize images with the `next/image` component for better performance.
+
+---
+name: typescript-best-practices.mdc
+description: TypeScript coding standards and type safety guidelines
+globs: **/*.{ts,tsx}
+---
+
+- Enable strict mode in your `tsconfig.json` for enhanced type checking.
+- Use type inference where possible to reduce redundancy.
+- Employ generics for reusable components and functions.
+- Utilize union types and type guards for better type safety.
+- Implement custom types for complex data structures used in your application.
+
+---
+name: tailwindcss-best-practices.mdc
+description: Best practices for using Tailwind CSS in your project
+globs: **/*.{ts,tsx,css}
+---
+
+- Use utility-first classes for rapid development and consistent styling.
+- Create custom components with `@apply` directive for reusable styles.
+- Implement responsive design using Tailwind's responsive utility classes.
+- Optimize your CSS by using the `purge` option to remove unused styles.
+- Leverage Tailwind's dark mode support for better user experience.
+
+---
+name: shadcn-ui-best-practices.mdc
+description: Guidelines for using Shadcn UI components
+globs: **/*.{ts,tsx}
+---
+
+- Follow Shadcn UI's component structure for consistency across your application.
+- Customize components using the provided props and utility classes.
+- Ensure accessibility by using Shadcn UI's built-in accessibility features.
+- Extend components with custom styles while maintaining the original functionality.
+- Use Shadcn UI's theming capabilities to match your project's design system.
+
+---
+name: prisma-best-practices.mdc
+description: Best practices for using Prisma ORM with PostgreSQL
+globs: **/*.{ts,tsx}
+---
+
+- Use Prisma Client for type-safe database queries and improved developer experience.
+- Implement proper error handling for database operations.
+- Utilize Prisma Migrate for version-controlled database schema changes.
+- Optimize queries with Prisma's query API and relation loading.
+- Leverage Prisma's transaction support for complex database operations.
+
+---
+name: nextauth-best-practices.mdc
+description: Best practices for implementing authentication with NextAuth.js
+globs: **/*.{ts,tsx}
+---
+
+- Use NextAuth.js for seamless authentication and session management.
+- Implement multiple authentication providers for user flexibility.
+- Secure your API routes with NextAuth.js's built-in middleware.
+- Customize the authentication flow to match your application's needs.
+- Implement proper error handling and user feedback for authentication processes.
+
+---
+name: jest-best-practices.mdc
+description: Best practices for testing with Jest in Next.js applications
+globs: **/*.{ts,tsx,js,jsx}
+---
+
+- Write unit tests for individual components and functions.
+- Use Jest's mocking capabilities to isolate dependencies during testing.
+- Implement integration tests to ensure proper component interactions.
+- Utilize code coverage reports to identify untested areas of your codebase.
+- Set up a CI/CD pipeline to run tests automatically on code changes.

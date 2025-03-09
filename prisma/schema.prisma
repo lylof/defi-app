@@ -42,6 +42,9 @@ model User {
   submissions   Submission[]
   activityLogsAsTarget  ActivityLog[]  @relation("TargetUser")
   activityLogsAsAdmin   ActivityLog[]  @relation("AdminUser")
+  
+  // Nouvelle relation avec les évaluations
+  evaluations   SubmissionEvaluation[]
 
   @@map("users")
 }
@@ -110,11 +113,15 @@ model Challenge {
   participations ChallengeParticipation[]
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @updatedAt
+  isPublished    Boolean                  @default(false)
+  allowMultipleSubmissions Boolean        @default(false)
+  maxSubmissions Int?
 
   // Relations
   createdBy   User       @relation("CreatedBy", fields: [createdById], references: [id])
   createdById String
   submissions Submission[]
+  evaluationCriteria EvaluationCriteria[]
 }
 
 model File {
@@ -239,6 +246,9 @@ model Submission {
   userId      String
   challenge   Challenge @relation(fields: [challengeId], references: [id])
   challengeId String
+  
+  // Nouvelle relation avec les évaluations
+  evaluations SubmissionEvaluation[]
 }
 
 model ActivityLog {
@@ -246,12 +256,47 @@ model ActivityLog {
   action    LogAction
   details   String?
   createdAt DateTime    @default(now())
-  
+
   // Relations
-  admin     User        @relation("AdminUser", fields: [adminId], references: [id])
-  adminId   String
-  target    User        @relation("TargetUser", fields: [targetId], references: [id])
-  targetId  String
+  targetUser User?      @relation("TargetUser", fields: [targetUserId], references: [id])
+  targetUserId String?
+  adminUser  User?      @relation("AdminUser", fields: [adminUserId], references: [id])
+  adminUserId String?
+}
+
+model EvaluationCriteria {
+  id          String    @id @default(cuid())
+  name        String
+  description String
+  weight      Int       @default(1)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  challengeId String
+  
+  // Nouvelle relation avec les évaluations
+  evaluations SubmissionEvaluation[]
+}
+
+// Nouveau modèle pour les évaluations détaillées des soumissions
+model SubmissionEvaluation {
+  id          String    @id @default(cuid())
+  score       Int       // Score attribué pour ce critère (généralement sur 10)
+  comment     String?   // Commentaire optionnel pour ce critère
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  submission  Submission @relation(fields: [submissionId], references: [id])
+  submissionId String
+  criterion   EvaluationCriteria @relation(fields: [criterionId], references: [id])
+  criterionId String
+  evaluator   User      @relation(fields: [evaluatorId], references: [id])
+  evaluatorId String
+  
+  @@unique([submissionId, criterionId])
 }
 
 enum SubmissionStatus {
@@ -264,4 +309,30 @@ enum LogAction {
   UPDATE_ROLE
   BAN
   UNBAN
+  SUBMISSION_APPROVED
+  SUBMISSION_REJECTED
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([token])
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([token])
 } 
