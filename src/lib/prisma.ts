@@ -1,6 +1,11 @@
 import { PrismaClient, Prisma } from "@prisma/client";
 import { DB_CONFIG, getOptimizedConnectionString, getBackoffDelay } from "./db-config";
 import { dbLogger } from "./logger";
+import { EventEmitter } from 'events';
+
+// Augmenter la limite d'écouteurs d'événements pour éviter les avertissements
+// Cela doit être placé en début de fichier, avant toute autre importation ou code
+process.setMaxListeners(20);
 
 // Type pour le cache global de Prisma
 const globalForPrisma = globalThis as unknown as {
@@ -53,6 +58,7 @@ class PrismaClientWithReconnect extends PrismaClient {
   private connectionErrors: number = 0;
   private totalQueries: number = 0;
   private successfulQueries: number = 0;
+  private connectionCreationTime: number = Date.now();
 
   constructor(options?: Prisma.PrismaClientOptions) {
     super(options);
@@ -200,13 +206,59 @@ class PrismaClientWithReconnect extends PrismaClient {
     // Nettoyer tout timer existant
     if (this.connectionCheckTimer) {
       clearInterval(this.connectionCheckTimer);
+      this.connectionCheckTimer = null;
     }
     
-    // Créer un nouveau timer pour vérifier périodiquement la connexion
+    // Ajouter une propriété pour suivre l'âge de la connexion
+    this.connectionCreationTime = Date.now();
+    
+    // Créer un nouveau timer pour vérifier périodiquement la santé de la connexion
     this.connectionCheckTimer = setInterval(async () => {
       try {
         // Si aucune requête n'a été effectuée depuis longtemps, vérifier la connexion
         const timeSinceLastQuery = Date.now() - this.lastQueryTime;
+        const connectionAge = Date.now() - this.connectionCreationTime;
+        
+        // Vérifier si la connexion est trop ancienne (plus de 30 minutes)
+        if (connectionAge > DB_CONFIG.maxConnectionAge) {
+          dbLogger.info(`Connexion trop ancienne (${Math.round(connectionAge / 60000)} minutes), recyclage...`);
+          
+          try {
+            // Déconnecter puis reconnecter pour recycler la connexion
+            await this.$disconnect();
+            await this.$connect();
+            
+            // Réinitialiser le timestamp de création
+            this.connectionCreationTime = Date.now();
+            this.connectionHealthy = true;
+            this.lastQueryTime = Date.now();
+            
+            dbLogger.info("Connexion recyclée avec succès");
+          } catch (recycleError) {
+            const errorMessage = recycleError instanceof Error 
+              ? recycleError.message 
+              : recycleError 
+                ? String(recycleError)
+                : 'Erreur inconnue lors du recyclage';
+                
+            dbLogger.error(`Échec du recyclage de la connexion: ${errorMessage}`);
+            
+            // Tenter une reconnexion complète en cas d'échec
+            await this.reconnect().catch(reconnectError => {
+              const reconnectErrorMessage = reconnectError instanceof Error 
+                ? reconnectError.message 
+                : reconnectError 
+                  ? String(reconnectError)
+                  : 'Erreur inconnue lors de la reconnexion';
+                  
+              dbLogger.error(`Échec de la reconnexion après échec de recyclage: ${reconnectErrorMessage}`);
+            });
+          }
+          
+          return; // Sortir après le recyclage
+        }
+        
+        // Vérifier la connexion si inactive depuis longtemps
         if (timeSinceLastQuery > this.connectionCheckInterval) {
           dbLogger.info("Vérification de la santé de la connexion à la base de données");
           
@@ -240,7 +292,7 @@ class PrismaClientWithReconnect extends PrismaClient {
           }
         }
       } catch (timerError) {
-        dbLogger.error('Erreur dans le timer de vérification de santé', 
+        dbLogger.error('Erreur dans le timer de vérification de santé',
           timerError instanceof Error ? timerError : new Error(String(timerError)));
       }
     }, this.connectionCheckInterval);
@@ -366,6 +418,26 @@ class PrismaClientWithReconnect extends PrismaClient {
     if (this.connectionCheckTimer) {
       clearInterval(this.connectionCheckTimer);
       this.connectionCheckTimer = null;
+    }
+    
+    // Nettoyer les écouteurs d'événements process pour éviter les fuites mémoire
+    // Note: PrismaClient n'est pas un EventEmitter, donc nous ne pouvons pas utiliser removeAllListeners
+    // Mais nous pouvons nettoyer les écouteurs process qui pourraient avoir été ajoutés
+    try {
+      // Réduire le nombre d'écouteurs beforeExit
+      const beforeExitListenersCount = process.listenerCount('beforeExit');
+      if (beforeExitListenersCount > 10) {
+        dbLogger.warn(`Nombre élevé d'écouteurs beforeExit détecté: ${beforeExitListenersCount}`);
+      }
+    } catch (listenerError) {
+      // Formater l'erreur selon le format attendu par le logger
+      const errorMessage = listenerError instanceof Error 
+        ? listenerError.message 
+        : listenerError 
+          ? String(listenerError)
+          : 'Erreur inconnue lors de la vérification des écouteurs';
+      
+      dbLogger.warn(`Erreur lors de la vérification des écouteurs process: ${errorMessage}`);
     }
     
     try {

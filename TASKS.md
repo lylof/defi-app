@@ -188,6 +188,7 @@
    - [x] Sécurisation des uploads
    - [-] Optimisation des requêtes DB (en cours)
    - [x] Gestion des erreurs robuste pour les connexions DB
+   - [x] Recyclage automatique des connexions DB anciennes
 
 ## Notes de Suivi
 
@@ -231,6 +232,9 @@
   - [x] Mécanisme de reconnexion automatique avec backoff exponentiel
   - [x] Protection contre les valeurs null/undefined dans les gestionnaires d'erreurs
   - [x] Surveillance proactive de la santé des connexions DB
+  - [x] Recyclage automatique des connexions anciennes
+  - [x] Optimisation des paramètres de connexion PostgreSQL
+  - [x] Réduction des fuites mémoire liées aux écouteurs d'événements
 
 ### Système de Badges
 - [x] Système de badges

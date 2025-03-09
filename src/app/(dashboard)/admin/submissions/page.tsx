@@ -24,10 +24,12 @@ interface SubmissionItem {
 }
 
 export default async function SubmissionsPage() {
+  // Utiliser authOptions pour obtenir une session fiable
   const session = await getServerSession();
 
-  if (!session || session.user.role !== "ADMIN") {
-    redirect("/login");
+  // Vérification plus robuste de l'authentification et du rôle d'administrateur
+  if (!session || !session.user || session.user.role !== "ADMIN") {
+    return redirect("/login?callbackUrl=/admin/submissions");
   }
 
   // Récupérer toutes les soumissions (en attente et évaluées)

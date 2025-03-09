@@ -4,7 +4,7 @@ import { SessionProvider } from "next-auth/react";
 import { Navbar } from "@/components/layout/navbar";
 import { BadgeNotificationProvider } from "@/components/badges/badge-notification-provider";
 import { AuthStatusNotification } from "@/components/ui/auth-status-notification";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (

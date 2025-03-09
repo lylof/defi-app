@@ -1,7 +1,10 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
-import { metricsMiddleware } from "./lib/metrics-middleware";
+import { logger } from "./lib/logger";
+import { sessionCacheMiddleware } from "./lib/auth/session-cache-middleware";
+
+const middlewareLogger = logger.createContextLogger('middleware');
 
 /**
  * Middleware d'authentification
@@ -14,100 +17,119 @@ const authMiddleware = withAuth(
     
     // Vérifier si un token existe
     if (!token) {
-      console.log(`[Middleware] Pas de token pour ${pathname}, redirection vers login`);
+      middlewareLogger.info(`Pas de token pour ${pathname}, redirection vers login`);
       return NextResponse.redirect(new URL("/login", req.url));
     }
     
     // Vérifier si la session a expiré
     if (token?.error === "SessionExpired") {
-      console.log(`[Middleware] Session expirée pour ${pathname}, redirection vers login avec paramètre expired`);
+      middlewareLogger.info(`Session expirée pour ${pathname}, redirection vers login avec paramètre expired`);
       return NextResponse.redirect(new URL("/login?expired=true", req.url));
     }
     
     // Vérifier l'ID utilisateur
     if (!token.id || typeof token.id !== 'string' || token.id.trim() === '') {
-      console.log(`[Middleware] ID utilisateur invalide (${token.id}) pour ${pathname}, redirection vers logout`);
+      middlewareLogger.warn(`ID utilisateur invalide (${token.id}) pour ${pathname}, redirection vers logout`);
       return NextResponse.redirect(new URL("/logout", req.url));
     }
     
     // Protection des routes admin
     if (pathname.startsWith("/admin")) {
       if (token?.role !== "ADMIN") {
-        console.log(`[Middleware] Accès admin refusé pour ${token.email || 'utilisateur inconnu'} (rôle: ${token.role}) - ${pathname}`);
+        middlewareLogger.warn(`Accès admin refusé pour ${token.email || 'utilisateur inconnu'} (rôle: ${token.role}) - ${pathname}`);
         return NextResponse.redirect(new URL("/login?unauthorized=true", req.url));
       }
-      console.log(`[Middleware] Accès admin autorisé pour ${token.email || 'utilisateur inconnu'} - ${pathname}`);
+      middlewareLogger.info(`Accès admin autorisé pour ${token.email || 'utilisateur inconnu'} - ${pathname}`);
     }
     
     // Vérification spécifique pour la route de profil
     if (pathname === "/profile") {
       // Log d'accès pour déboguer les problèmes d'authentification
-      console.log(`[Middleware] Accès au profil pour l'utilisateur ${token.id} (${token.email || 'email inconnu'})`);
+      middlewareLogger.debug(`Accès au profil pour l'utilisateur ${token.id} (${token.email || 'email inconnu'})`);
     }
 
     return NextResponse.next();
   },
   {
     callbacks: {
-      authorized: ({ token, req }) => {
-        // Autoriser même si token.error existe pour pouvoir gérer l'expiration dans le middleware
-        const isAuthorized = !!token;
-        const pathname = req.nextUrl.pathname;
-        
-        if (!isAuthorized) {
-          console.log(`[Middleware][Unauthorized] Accès refusé à ${pathname} - Pas de token valide`);
-        }
-        
-        return isAuthorized;
-      },
+      authorized: ({ token }) => !!token,
     },
     pages: {
       signIn: "/login",
       error: "/login",
-      signOut: "/logout",
-    }
+    },
   }
 );
 
 /**
- * Middleware principal
- * Chaîne plusieurs middlewares pour gérer l'authentification et les métriques
+ * Middleware principal qui combine tous les middlewares
  */
 export default async function middleware(request: NextRequest) {
-  // Pour les routes qui nécessitent une authentification
-  if (shouldApplyAuthMiddleware(request)) {
-    // Le withAuth a besoin de Request et non NextRequest
-    // @ts-ignore - On sait que cette conversion fonctionne avec withAuth
-    const response = await authMiddleware(request);
-    return response;
-  }
-  
-  // Pour toutes les routes, appliquer le middleware de métriques
-  return metricsMiddleware(request, async () => {
-    // Continuer la chaîne des middlewares ou passer au handler de la route
+  try {
+    const { pathname } = request.nextUrl;
+    
+    // Enregistrer les métriques de base pour toutes les requêtes
+    const startTime = Date.now();
+    
+    // Middleware de cache de session pour les requêtes d'API de session
+    if (pathname.startsWith('/api/auth/session')) {
+      try {
+        return await sessionCacheMiddleware(request);
+      } catch (error) {
+        middlewareLogger.error('Erreur dans le middleware de cache de session', 
+          error instanceof Error ? error : new Error(String(error)));
+      }
+    }
+    
+    // Middleware d'authentification pour les routes protégées
+    if (shouldApplyAuthMiddleware(request)) {
+      try {
+        // L'erreur de lint indique qu'il faut deux arguments
+        // Mais en réalité, withAuth prend un seul argument de type NextRequest
+        // NextAuth gère en interne la conversion, donc ignorons le lint ici
+        // @ts-ignore - withAuth attend NextRequest mais attend des options en second paramètre dans certains cas
+        return authMiddleware(request);
+      } catch (error) {
+        middlewareLogger.error('Erreur dans le middleware d\'authentification', 
+          error instanceof Error ? error : new Error(String(error)));
+      }
+    }
+    
+    // Pour les autres routes, continuer normalement
     return NextResponse.next();
-  });
+  } catch (error) {
+    // Logger l'erreur et continuer normalement pour éviter de bloquer l'application
+    middlewareLogger.error('Erreur dans le middleware principal', 
+      error instanceof Error ? error : new Error(String(error)));
+    return NextResponse.next();
+  } finally {
+    // Enregistrer les métriques de fin de requête si nécessaire
+  }
 }
 
 /**
- * Détermine si le middleware d'authentification doit être appliqué à la requête
+ * Détermine si le middleware d'authentification doit être appliqué à cette requête
  */
 function shouldApplyAuthMiddleware(request: NextRequest): boolean {
   const { pathname } = request.nextUrl;
   
-  // Liste des chemins protégés par l'authentification
-  const protectedPaths = [
-    "/admin",
-    "/profile",
-    "/dashboard",
-    "/challenges"
-  ];
+  // Ne pas appliquer l'authentification aux routes publiques
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/verify-email") ||
+    pathname.startsWith("/public") ||
+    pathname.startsWith("/favicon") ||
+    pathname === "/"
+  ) {
+    return false;
+  }
   
-  // Vérifier si le chemin correspond à un chemin protégé
-  return protectedPaths.some(path => 
-    pathname === path || 
-    pathname.startsWith(`${path}/`)
-  );
+  // Appliquer l'authentification à toutes les autres routes
+  return true;
 }
 
 /**

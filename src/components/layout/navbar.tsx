@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { LogoutButton } from "@/components/auth/logout-button";
+import NotificationIndicator from "@/components/notifications/NotificationIndicator";
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -35,6 +36,8 @@ export function Navbar() {
         <div className="ml-auto flex items-center space-x-4">
           {session ? (
             <>
+              <NotificationIndicator />
+              
               <Link
                 href="/profile"
                 className="text-sm font-medium transition-colors hover:text-primary"

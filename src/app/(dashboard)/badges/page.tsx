@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 export default async function BadgesPage() {
   const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
-    redirect("/login");
+  if (!session || !session.user || !session.user.id) {
+    return redirect("/login?callbackUrl=/badges");
   }
 
   try {

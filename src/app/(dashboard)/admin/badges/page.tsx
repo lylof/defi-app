@@ -3,12 +3,13 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { BadgeForm } from "@/components/admin/badge-form";
 import { BadgeList } from "@/components/admin/badge-list";
+import { authOptions } from "@/lib/auth";
 
 export default async function BadgesAdminPage() {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
 
-  if (!session || session.user.role !== "ADMIN") {
-    redirect("/login");
+  if (!session || !session.user || session.user.role !== "ADMIN") {
+    return redirect("/login?callbackUrl=/admin/badges");
   }
 
   const badges = await db.badge.findMany({

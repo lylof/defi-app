@@ -199,17 +199,29 @@ model Level {
 }
 
 model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  type      String
-  title     String
-  content   String
-  read      Boolean  @default(false)
-  badgeId   String?
-  user      User     @relation(fields: [userId], references: [id])
-  badge     Badge?   @relation(fields: [badgeId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  userId       String
+  title        String
+  content      String   @db.Text // Contenu de la notification
+  type         String   // Type de notification: BADGE_EARNED, LEVEL_UP, etc.
+  priority     String   @default("MEDIUM") // LOW, MEDIUM, HIGH
+  read         Boolean  @default(false)
+  linkUrl      String?  // URL optionnelle pour rediriger l'utilisateur
+  imageUrl     String?  // URL optionnelle d'une image associée
+  metadata     String?  @db.Text // Données JSON additionnelles
+  relatedId    String?  // ID d'un élément associé (badge, défi, etc.)
+  relatedType  String?  // Type de l'élément associé
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@index([type])
+  @@map("notifications")
 }
 
 model Comment {
