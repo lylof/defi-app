@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { dbHealthService } from "@/lib/db-health-service";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { cacheService } from "@/lib/cache-service";
 import { logger } from "@/lib/logger";
 import { apiLogger } from "@/lib/logger";
@@ -17,8 +18,17 @@ export async function GET() {
   try {
     apiLogger.info("Requête de vérification de la santé du système reçue");
     
-    // Vérifier l'authentification
-    const session = await getServerSession();
+    // Vérifier l'authentification avec authOptions explicites
+    const session = await getServerSession(authOptions);
+    
+    // Log pour déboguer les informations de session
+    apiLogger.debug("Informations de session pour la requête health", {
+      metadata: {
+        sessionExists: !!session,
+        userId: session?.user?.id,
+        userRole: session?.user?.role,
+      }
+    });
     
     // Vérifier si l'utilisateur est connecté et est un administrateur
     if (!session?.user?.id || session.user.role !== "ADMIN") {
@@ -34,6 +44,9 @@ export async function GET() {
         { status: 403 }
       );
     }
+    
+    // Log de succès de l'authentification
+    apiLogger.info(`Accès autorisé à l'API de santé pour l'utilisateur ${session.user.id} (${session.user.role})`);
     
     // Forcer une vérification de la santé de la base de données
     await dbHealthService.checkHealth();

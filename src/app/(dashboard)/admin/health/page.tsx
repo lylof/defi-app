@@ -62,7 +62,18 @@ export default function SystemHealthPage() {
     setError(null);
     
     try {
-      const response = await fetch('/api/health');
+      const response = await fetch('/api/health', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Inclure les cookies de session pour l'authentification
+        credentials: 'include'
+      });
+      
+      if (response.status === 403) {
+        throw new Error('Vous n\'avez pas les autorisations nécessaires pour accéder à ces informations.');
+      }
       
       if (!response.ok) {
         throw new Error(`Erreur lors de la récupération des données de santé: ${response.status}`);
