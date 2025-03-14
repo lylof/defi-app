@@ -4,12 +4,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { 
-  LayoutDashboard, 
-  Users, 
-  FolderKanban,
-  Tags,
   LogOut,
-  LineChart
 } from "lucide-react";
 import { NavItem } from "@/components/admin/nav-item";
 import { Button } from "@/components/ui/button";
@@ -98,41 +93,39 @@ export default async function AdminLayout({
     const userName = session.user.name || session.user.email || "Administrateur";
 
     return (
-      <div className="min-h-screen bg-background">
+      <div className="bg-background h-screen flex flex-col">
         {/* Header avec distinction visuelle */}
-        <header className="border-b bg-primary/5">
-          <div className="flex h-16 items-center px-4">
-            <div className="flex items-center gap-2">
-              <Link href="/" className="flex items-center">
-                <span className="text-xl font-bold">LPT Défis</span>
-              </Link>
-              <span className="text-sm px-2 py-1 rounded-md bg-primary text-white font-medium">
-                Mode Administration
+        <header className="border-b bg-primary/10 h-16 flex items-center px-4">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center">
+              <span className="text-xl font-bold">LPT Défis</span>
+            </Link>
+            <span className="text-sm px-2 py-1 rounded-md bg-primary text-primary-foreground font-medium">
+              Mode Administration
+            </span>
+          </div>
+          
+          <div className="ml-auto flex items-center space-x-4">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-background/90">
+              <span className="text-sm font-medium text-primary">
+                {userName}
               </span>
-            </div>
-            
-            <div className="ml-auto flex items-center space-x-4">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-background">
-                <span className="text-sm font-medium">
-                  {userName}
-                </span>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link 
-                    href="/logout" 
-                    className="flex items-center gap-2 text-destructive hover:text-destructive/90"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Déconnexion</span>
-                  </Link>
-                </Button>
-              </div>
+              <Button variant="ghost" size="sm" asChild>
+                <Link 
+                  href="/logout" 
+                  className="flex items-center gap-2 text-destructive hover:text-destructive/90"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Déconnexion</span>
+                </Link>
+              </Button>
             </div>
           </div>
         </header>
 
-        <div className="flex h-[calc(100vh-4rem)]">
-          {/* Sidebar avec distinction visuelle renforcée */}
-          <aside className="w-64 border-r bg-primary/5">
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar administrative unique */}
+          <aside className="w-64 border-r bg-primary/5 overflow-y-auto">
             <div className="p-4 border-b bg-primary/10">
               <h2 className="font-semibold text-primary">Menu Administration</h2>
             </div>
@@ -150,9 +143,9 @@ export default async function AdminLayout({
           </aside>
 
           {/* Main content */}
-          <main className="flex-1 overflow-auto bg-background">
+          <main className="flex-1 overflow-auto bg-background flex flex-col">
             <PageHeader />
-            <div className="p-8">
+            <div className="p-8 flex-1 overflow-auto">
               {children}
             </div>
           </main>

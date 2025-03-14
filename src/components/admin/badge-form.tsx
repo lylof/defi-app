@@ -124,7 +124,7 @@ export function BadgeForm({ badge }: BadgeFormProps = {}) {
           name="image"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>URL de l'image (optionnelle)</FormLabel>
+              <FormLabel>URL de l&apos;image (optionnelle)</FormLabel>
               <FormControl>
                 <Input placeholder="https://exemple.com/image.png" {...field} />
               </FormControl>
@@ -152,10 +152,10 @@ export function BadgeForm({ badge }: BadgeFormProps = {}) {
           name="condition"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Condition d'obtention</FormLabel>
+              <FormLabel>Condition d&apos;obtention</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="Condition d'obtention du badge (ex: Compléter 5 défis)"
+                  placeholder="Condition d&apos;obtention du badge (ex: Compléter 5 défis)"
                   className="min-h-32"
                   {...field}
                 />

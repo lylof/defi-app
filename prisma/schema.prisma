@@ -1,71 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-enum UserRole {
-  USER
-  ADMIN
-  MEMBER
-}
-
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  bio           String?
-  points        Int       @default(0)
-  role          UserRole  @default(USER)
-  isActive      Boolean   @default(true)
-  lastLogin     DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  participations ChallengeParticipation[]
-  leaderboard   Leaderboard?
-  badges        UserBadge[]
-  level         Level?
-  notifications Notification[]
-  comments      Comment[]
-  adminLogs     AdminLog[]
-
-  // Relations
-  challenges    Challenge[]    @relation("CreatedBy")
-  submissions   Submission[]
-  activityLogsAsTarget  ActivityLog[]  @relation("TargetUser")
-  activityLogsAsAdmin   ActivityLog[]  @relation("AdminUser")
-  
-  // Nouvelle relation avec les évaluations
-  evaluations   SubmissionEvaluation[]
+  id                   String                   @id @default(cuid())
+  name                 String?
+  email                String?                  @unique
+  emailVerified        DateTime?
+  image                String?
+  password             String?
+  bio                  String?
+  points               Int                      @default(0)
+  role                 UserRole                 @default(USER)
+  isActive             Boolean                  @default(true)
+  lastLogin            DateTime?
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  accounts             Account[]
+  activityLogsAsAdmin  ActivityLog[]            @relation("AdminUser")
+  activityLogsAsTarget ActivityLog[]            @relation("TargetUser")
+  adminLogs            AdminLog[]
+  challenges           Challenge[]              @relation("CreatedBy")
+  participations       ChallengeParticipation[]
+  comments             Comment[]
+  leaderboard          Leaderboard?
+  level                Level?
+  sessions             Session[]
+  submissions          Submission[]
+  evaluations          SubmissionEvaluation[]
+  badges               UserBadge[]
+  notifications        Notification[]
 
   @@map("users")
 }
 
 model Account {
-  id                 String   @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token          String?  @db.Text
+  id                String   @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
   session_state     String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -77,8 +66,7 @@ model Session {
   expires      DateTime
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -93,64 +81,60 @@ model Category {
   id          String      @id @default(cuid())
   name        String      @unique
   description String?
-  challenges  Challenge[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  challenges  Challenge[]
 }
 
 model Challenge {
-  id             String                   @id @default(cuid())
-  title          String
-  description    String
-  brief          String
-  points         Int
-  startDate      DateTime
-  endDate        DateTime
-  participants   Int                      @default(0)
-  categoryId     String
-  category       Category                 @relation(fields: [categoryId], references: [id])
-  files          File[]
-  participations ChallengeParticipation[]
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @updatedAt
-  isPublished    Boolean                  @default(false)
-  allowMultipleSubmissions Boolean        @default(false)
-  maxSubmissions Int?
-
-  // Relations
-  createdBy   User       @relation("CreatedBy", fields: [createdById], references: [id])
-  createdById String
-  submissions Submission[]
-  evaluationCriteria EvaluationCriteria[]
+  id                       String                   @id @default(cuid())
+  title                    String
+  description              String
+  brief                    String
+  points                   Int
+  startDate                DateTime
+  endDate                  DateTime
+  participants             Int                      @default(0)
+  categoryId               String
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  isPublished              Boolean                  @default(false)
+  allowMultipleSubmissions Boolean                  @default(false)
+  maxSubmissions           Int?
+  createdById              String
+  category                 Category                 @relation(fields: [categoryId], references: [id])
+  createdBy                User                     @relation("CreatedBy", fields: [createdById], references: [id])
+  participations           ChallengeParticipation[]
+  evaluationCriteria       EvaluationCriteria[]
+  files                    File[]
+  submissions              Submission[]
 }
 
 model File {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   challengeId String
   url         String
   name        String
   size        Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
-
-  challenge Challenge @relation(fields: [challengeId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
 }
 
 model ChallengeParticipation {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   userId      String
   challengeId String
-  submitted   Boolean  @default(false)
-  submission  String?  @db.Text
-  evaluated   Boolean  @default(false)
-  approved    Boolean  @default(false)
-  status      String   @default("PENDING")  // PENDING, COMPLETED, FAILED
-  score       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
-
-  user      User      @relation(fields: [userId], references: [id])
-  challenge Challenge @relation(fields: [challengeId], references: [id])
+  submitted   Boolean   @default(false)
+  submission  String?
+  evaluated   Boolean   @default(false)
+  approved    Boolean   @default(false)
+  status      String    @default("PENDING")
+  score       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now())
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
 }
 
 model Leaderboard {
@@ -158,171 +142,145 @@ model Leaderboard {
   userId    String   @unique
   points    Int      @default(0)
   rank      Int      @default(0)
-  user      User     @relation(fields: [userId], references: [id])
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Badge {
-  id          String      @id @default(uuid())
-  name        String      @unique
-  description String
-  image       String
-  condition   String      @db.Text  // Condition d'obtention en JSON
-  points      Int         @default(0)
-  users       UserBadge[]
+  id            String         @id @default(uuid())
+  name          String         @unique
+  description   String
+  image         String
+  condition     String
+  points        Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  users         UserBadge[]
   notifications Notification[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
 }
 
 model UserBadge {
-  id        String   @id @default(uuid())
-  userId    String
-  badgeId   String
-  earnedAt  DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  badge     Badge    @relation(fields: [badgeId], references: [id])
+  id       String   @id @default(uuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+  badge    Badge    @relation(fields: [badgeId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, badgeId])
 }
 
 model Level {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  level       Int      @default(1)
-  experience  Int      @default(0)
-  nextLevel   Int      @default(100)  // Points requis pour le niveau suivant
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  level      Int      @default(1)
+  experience Int      @default(0)
+  nextLevel  Int      @default(100)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id])
 }
 
 model Notification {
-  id           String   @id @default(cuid())
-  userId       String
-  title        String
-  content      String   @db.Text // Contenu de la notification
-  type         String   // Type de notification: BADGE_EARNED, LEVEL_UP, etc.
-  priority     String   @default("MEDIUM") // LOW, MEDIUM, HIGH
-  read         Boolean  @default(false)
-  linkUrl      String?  // URL optionnelle pour rediriger l'utilisateur
-  imageUrl     String?  // URL optionnelle d'une image associée
-  metadata     String?  @db.Text // Données JSON additionnelles
-  relatedId    String?  // ID d'un élément associé (badge, défi, etc.)
-  relatedType  String?  // Type de l'élément associé
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  content     String
+  type        String
+  priority    String   @default("MEDIUM")
+  read        Boolean  @default(false)
+  linkUrl     String?
+  imageUrl    String?
+  metadata    String?
+  relatedId   String?
+  relatedType String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  badgeId     String?
+  badge       Badge?   @relation(fields: [badgeId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([read])
   @@index([createdAt])
   @@index([type])
+  @@index([badgeId])
   @@map("notifications")
 }
 
 model Comment {
-  id          String   @id @default(uuid())
-  userId      String
-  content     String   @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id])
+  id        String   @id @default(uuid())
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model AdminLog {
   id        String   @id @default(cuid())
   adminId   String
-  admin     User     @relation(fields: [adminId], references: [id])
   action    String
   targetId  String
   details   String
   createdAt DateTime @default(now())
+  admin     User     @relation(fields: [adminId], references: [id])
 
   @@index([adminId])
   @@index([targetId])
 }
 
 model Submission {
-  id          String    @id @default(cuid())
+  id          String                 @id @default(cuid())
   content     String
-  status      SubmissionStatus @default(PENDING)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relations
-  user        User      @relation(fields: [userId], references: [id])
+  status      SubmissionStatus       @default(PENDING)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
   userId      String
-  challenge   Challenge @relation(fields: [challengeId], references: [id])
   challengeId String
-  
-  // Nouvelle relation avec les évaluations
+  challenge   Challenge              @relation(fields: [challengeId], references: [id])
+  user        User                   @relation(fields: [userId], references: [id])
   evaluations SubmissionEvaluation[]
 }
 
 model ActivityLog {
-  id        String      @id @default(cuid())
-  action    LogAction
-  details   String?
-  createdAt DateTime    @default(now())
-
-  // Relations
-  targetUser User?      @relation("TargetUser", fields: [targetUserId], references: [id])
+  id           String    @id @default(cuid())
+  action       LogAction
+  details      String?
+  createdAt    DateTime  @default(now())
   targetUserId String?
-  adminUser  User?      @relation("AdminUser", fields: [adminUserId], references: [id])
-  adminUserId String?
+  adminUserId  String?
+  adminUser    User?     @relation("AdminUser", fields: [adminUserId], references: [id])
+  targetUser   User?     @relation("TargetUser", fields: [targetUserId], references: [id])
 }
 
 model EvaluationCriteria {
-  id          String    @id @default(cuid())
+  id          String                 @id @default(cuid())
   name        String
   description String
-  weight      Int       @default(1)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relations
-  challenge   Challenge @relation(fields: [challengeId], references: [id])
+  weight      Int                    @default(1)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
   challengeId String
-  
-  // Nouvelle relation avec les évaluations
+  challenge   Challenge              @relation(fields: [challengeId], references: [id])
   evaluations SubmissionEvaluation[]
 }
 
-// Nouveau modèle pour les évaluations détaillées des soumissions
 model SubmissionEvaluation {
-  id          String    @id @default(cuid())
-  score       Int       // Score attribué pour ce critère (généralement sur 10)
-  comment     String?   // Commentaire optionnel pour ce critère
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relations
-  submission  Submission @relation(fields: [submissionId], references: [id])
+  id           String             @id @default(cuid())
+  score        Int
+  comment      String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
   submissionId String
-  criterion   EvaluationCriteria @relation(fields: [criterionId], references: [id])
-  criterionId String
-  evaluator   User      @relation(fields: [evaluatorId], references: [id])
-  evaluatorId String
-  
+  criterionId  String
+  evaluatorId  String
+  criterion    EvaluationCriteria @relation(fields: [criterionId], references: [id])
+  evaluator    User               @relation(fields: [evaluatorId], references: [id])
+  submission   Submission         @relation(fields: [submissionId], references: [id])
+
   @@unique([submissionId, criterionId])
-}
-
-enum SubmissionStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum LogAction {
-  UPDATE_ROLE
-  BAN
-  UNBAN
-  SUBMISSION_APPROVED
-  SUBMISSION_REJECTED
 }
 
 model PasswordReset {
@@ -347,4 +305,24 @@ model EmailVerification {
 
   @@index([email])
   @@index([token])
-} 
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  MEMBER
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LogAction {
+  UPDATE_ROLE
+  BAN
+  UNBAN
+  SUBMISSION_APPROVED
+  SUBMISSION_REJECTED
+}

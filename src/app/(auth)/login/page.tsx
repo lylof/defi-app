@@ -7,6 +7,8 @@ import * as z from "zod";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import { AnonymousMigrationService } from "@/lib/services/anonymous-migration-service";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -21,12 +23,22 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [sessionExpired, setSessionExpired] = useState<boolean>(false);
+  const [hasAnonymousParticipations, setHasAnonymousParticipations] = useState<boolean>(false);
+  
+  // Récupérer l'URL de callback si elle existe
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   
   useEffect(() => {
     // Vérifier si la session a expiré
     const expired = searchParams.get("expired") === "true";
     if (expired) {
       setSessionExpired(true);
+    }
+    
+    // Vérifier s'il existe des participations anonymes à migrer
+    if (typeof window !== "undefined") {
+      const hasParticipations = AnonymousMigrationService.hasParticipationsToMigrate();
+      setHasAnonymousParticipations(hasParticipations);
     }
   }, [searchParams]);
   
@@ -43,6 +55,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
+      // Effectuer la connexion sans redirection automatique
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
@@ -55,9 +68,33 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      // Récupérer les informations de session pour déterminer la route appropriée
+      const sessionResponse = await fetch("/api/auth/session");
+      const session = await sessionResponse.json();
+      
+      // Vérifier et migrer les participations anonymes si nécessaire
+      if (hasAnonymousParticipations) {
+        try {
+          const migratedCount = await AnonymousMigrationService.migrateAnonymousParticipations();
+          if (migratedCount > 0) {
+            // Toast est déjà affiché dans le service
+          }
+        } catch (err) {
+          console.error("Erreur lors de la migration des participations:", err);
+          toast.error("Impossible de migrer vos participations anonymes");
+        }
+      }
+      
+      // Si l'utilisateur est un administrateur, le rediriger vers l'interface admin
+      // sinon, utiliser l'URL de callback ou le dashboard par défaut
+      if (session?.user?.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push(callbackUrl);
+      }
     } catch (error) {
-      setError("Une erreur est survenue");
+      console.error("Erreur de connexion:", error);
+      setError("Une erreur est survenue lors de la connexion");
     }
   };
 
@@ -94,6 +131,14 @@ export default function LoginPage() {
           {sessionExpired && (
             <div className="bg-amber-100 border border-amber-400 text-amber-700 px-4 py-3 rounded relative">
               Votre session a expiré. Veuillez vous reconnecter.
+            </div>
+          )}
+          {hasAnonymousParticipations && (
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded relative">
+              <p className="font-medium">Participations anonymes détectées</p>
+              <p className="text-sm">
+                En vous connectant, vos participations anonymes seront automatiquement transférées à votre compte.
+              </p>
             </div>
           )}
           <div className="grid gap-6">
@@ -161,7 +206,7 @@ export default function LoginPage() {
               href="/register"
               className="underline underline-offset-4 hover:text-primary"
             >
-              S'inscrire
+              S&apos;inscrire
             </Link>
           </p>
         </div>

@@ -81,17 +81,27 @@ export function getOptimizedConnectionString(url: string): string {
 }
 
 /**
- * Calcule le délai pour une tentative de reconnexion avec backoff exponentiel
- * 
- * @param attempt Numéro de la tentative (commençant à 1)
- * @returns Délai en millisecondes
+ * Calcule le délai de backoff exponentiel pour les tentatives de reconnexion
+ * @param attempts Nombre de tentatives déjà effectuées
+ * @param baseInterval Intervalle de base en ms (optionnel, par défaut selon DB_CONFIG)
+ * @returns Délai en millisecondes à attendre avant la prochaine tentative
  */
-export function getBackoffDelay(attempt: number): number {
-  const baseDelay = DB_CONFIG.retryInterval;
-  // Ajout d'un facteur aléatoire pour éviter les tempêtes de reconnexion
-  const jitter = Math.random() * 0.3 + 0.85; // Entre 0.85 et 1.15
-  return Math.min(
-    baseDelay * Math.pow(DB_CONFIG.backoffFactor, attempt - 1) * jitter,
-    60000 // Plafond à 60 secondes
+export function getBackoffDelay(attempts: number, baseInterval?: number): number {
+  // Utiliser l'intervalle fourni ou celui de la configuration
+  const baseDelay = baseInterval || DB_CONFIG.retryInterval;
+  const maxDelay = 60000; // 60 secondes maximum
+  
+  // Ajouter un jitter pour éviter les tempêtes de reconnexion
+  const jitter = Math.random() * 0.2 - 0.1; // Jitter entre -10% et +10%
+  
+  // Calculer le délai de base avec backoff exponentiel
+  let delay = Math.min(
+    baseDelay * Math.pow(DB_CONFIG.backoffFactor, attempts),
+    maxDelay
   );
+  
+  // Appliquer le jitter
+  delay = delay * (1 + jitter);
+  
+  return Math.floor(delay);
 } 

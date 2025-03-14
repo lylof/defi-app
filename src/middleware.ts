@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 import { logger } from "./lib/logger";
 import { sessionCacheMiddleware } from "./lib/auth/session-cache-middleware";
+import { isEdgeRuntime } from "./lib/prisma-edge";
 
 const middlewareLogger = logger.createContextLogger('middleware');
 
@@ -33,6 +34,15 @@ const authMiddleware = withAuth(
       return NextResponse.redirect(new URL("/logout", req.url));
     }
     
+    // Redirection automatique des administrateurs vers leur interface dédiée
+    if (token?.role === "ADMIN" && 
+        !pathname.startsWith("/admin") && 
+        !pathname.startsWith("/api") &&
+        pathname !== "/logout") {
+      middlewareLogger.info(`Redirection automatique vers l'interface admin pour ${token.email || 'admin'} - ${pathname} -> /admin`);
+      return NextResponse.redirect(new URL("/admin", req.url));
+    }
+    
     // Protection des routes admin
     if (pathname.startsWith("/admin")) {
       if (token?.role !== "ADMIN") {
@@ -44,6 +54,12 @@ const authMiddleware = withAuth(
     
     // Vérification spécifique pour la route de profil
     if (pathname === "/profile") {
+      // Si l'utilisateur est admin, rediriger vers le profil admin
+      if (token?.role === "ADMIN") {
+        middlewareLogger.debug(`Redirection du profil standard vers profil admin pour ${token.email || 'admin'}`);
+        return NextResponse.redirect(new URL("/admin/profile", req.url));
+      }
+      
       // Log d'accès pour déboguer les problèmes d'authentification
       middlewareLogger.debug(`Accès au profil pour l'utilisateur ${token.id} (${token.email || 'email inconnu'})`);
     }
@@ -84,9 +100,6 @@ export default async function middleware(request: NextRequest) {
     // Middleware d'authentification pour les routes protégées
     if (shouldApplyAuthMiddleware(request)) {
       try {
-        // L'erreur de lint indique qu'il faut deux arguments
-        // Mais en réalité, withAuth prend un seul argument de type NextRequest
-        // NextAuth gère en interne la conversion, donc ignorons le lint ici
         // @ts-ignore - withAuth attend NextRequest mais attend des options en second paramètre dans certains cas
         return authMiddleware(request);
       } catch (error) {
@@ -145,6 +158,15 @@ export const config = {
     "/challenges/:path*",
     
     // Routes API pour les métriques
-    "/api/:path*"
+    "/api/:path*",
+
+    /*
+     * Match all paths except for:
+     * 1. /api routes
+     * 2. /_next static files
+     * 3. /_static static files
+     * 4. /favicon.ico, /sitemap.xml, /robots.txt (static files)
+     */
+    '/((?!api|_next|_static|_vercel|favicon.ico|sitemap.xml|robots.txt).*)',
   ],
 }; 

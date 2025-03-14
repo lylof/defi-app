@@ -29,6 +29,70 @@ export class AdminService {
     }
   }
 
+  /**
+   * Récupère les statistiques globales pour le tableau de bord d'administration
+   * Cette fonction collecte des métriques comme le nombre d'utilisateurs, de défis,
+   * de soumissions et d'autres statistiques clés pour l'administration
+   */
+  static async getAdminStats(): Promise<{
+    totalUsers: number;
+    activeUsers: number;
+    totalChallenges: number;
+    activeChallenges: number;
+    totalSubmissions: number;
+    pendingSubmissions: number;
+    totalBadges: number;
+    lastRegistered?: Date;
+  }> {
+    try {
+      const [
+        totalUsers,
+        activeUsers,
+        totalChallenges,
+        activeChallenges,
+        totalSubmissions,
+        pendingSubmissions,
+        totalBadges,
+        lastRegisteredUser
+      ] = await Promise.all([
+        prisma.user.count(),
+        prisma.user.count({ where: { isActive: true } }),
+        prisma.challenge.count(),
+        prisma.challenge.count({ where: { endDate: { gt: new Date() } } }),
+        prisma.submission.count(),
+        prisma.submission.count({ where: { status: 'PENDING' } }),
+        prisma.badge.count(),
+        prisma.user.findFirst({
+          orderBy: { createdAt: 'desc' },
+          select: { createdAt: true }
+        })
+      ]);
+
+      return {
+        totalUsers,
+        activeUsers,
+        totalChallenges,
+        activeChallenges,
+        totalSubmissions,
+        pendingSubmissions,
+        totalBadges,
+        lastRegistered: lastRegisteredUser?.createdAt
+      };
+    } catch (error) {
+      console.error('Erreur lors de la récupération des statistiques admin:', error);
+      // Retourner des valeurs par défaut en cas d'erreur
+      return {
+        totalUsers: 0,
+        activeUsers: 0,
+        totalChallenges: 0,
+        activeChallenges: 0,
+        totalSubmissions: 0,
+        pendingSubmissions: 0,
+        totalBadges: 0
+      };
+    }
+  }
+
   static async getChallenges() {
     try {
       // Vérifier si la table Challenge existe et a la colonne createdById

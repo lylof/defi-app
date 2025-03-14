@@ -349,7 +349,7 @@ export default function SystemHealthPage() {
                 <CardHeader>
                   <CardTitle>Informations Système</CardTitle>
                   <CardDescription>
-                    Détails sur l'environnement d'exécution et les ressources
+                    Détails sur l&apos;environnement d'exécution et les ressources
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -408,9 +408,9 @@ export default function SystemHealthPage() {
             <TabsContent value="auth">
               <Card>
                 <CardHeader>
-                  <CardTitle>Informations d'Authentification</CardTitle>
+                  <CardTitle>Informations d&apos;Authentification</CardTitle>
                   <CardDescription>
-                    Détails sur le système d'authentification et la session actuelle
+                    Détails sur le système d&apos;authentification et la session actuelle
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

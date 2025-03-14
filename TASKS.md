@@ -41,6 +41,44 @@
 
 ## Phase 2: Système de Défis 🟢
 
+### Interface d'accueil
+- [-] Conception de la page d'accueil
+  - [x] Maquette UI minimaliste et engageante
+  - [x] Intégration de la palette de couleurs (bleu dominant, accents en violet, jaune, rouge et vert)
+  - [x] Architecture responsive (mobile-first)
+  - [ ] Étude d'accessibilité
+- [x] Affichage du défi quotidien
+  - [x] Carte de défi centrale avec design percutant
+  - [x] Badge indiquant le domaine du défi
+  - [x] Compteur de temps restant pour le défi du jour
+  - [x] Indicateur de difficulté visuel
+  - [x] Indicateur de participation (nombre de participants actifs)
+- [x] Système de participation sans inscription
+  - [x] Flow de participation anonyme
+  - [x] Sauvegarde locale de la progression
+  - [x] Invitation discrète à l'inscription pour sauvegarder les progrès
+  - [x] Transition fluide vers l'inscription après participation
+- [x] Intégration du leaderboard compact
+  - [x] Affichage du top 5 des participants du jour
+  - [x] Visualisation des scores
+  - [x] Animation discrète pour montrer l'activité récente
+  - [x] Affichage adapté aux utilisateurs non connectés
+- [x] Composants d'engagement
+  - [x] Boutons d'appel à l'action ("Participer" et "Voir le brief")
+  - [x] Aperçu visuel engageant du défi
+  - [x] Animations subtiles pour dynamiser l'interface
+  - [x] Feedback visuel lors des interactions
+- [-] Intégration système
+  - [x] Connexion à l'API des défis existante
+  - [ ] Synchronisation avec le système de badges
+  - [ ] Lien avec le système de notifications
+  - [ ] Tests d'intégration avec les fonctionnalités existantes
+- [ ] Tests et optimisations
+  - [ ] Tests utilisateurs pour l'engagement immédiat
+  - [ ] Optimisation des performances (chargement rapide)
+  - [ ] Compatibilité cross-browser
+  - [ ] Tests A/B pour les éléments d'engagement
+
 ### Gestion des Défis
 - [x] Liste des défis
   - [x] Affichage des défis
@@ -193,9 +231,9 @@
 ## Notes de Suivi
 
 ### Dernière mise à jour
-- Date: 25/03/2024
-- État: Amélioration de la stabilité de la base de données
-- Focus actuel: Robustesse des connexions DB et correction de bugs
+- Date: 15/03/2025
+- État: Implémentation du système de participation sans inscription
+- Focus actuel: Optimisation de l'expérience utilisateur pour les participants anonymes
 
 ### État Global
 - 🟢 Phase 1 (Fondations) : ~95% fonctionnel

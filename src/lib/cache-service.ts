@@ -1,33 +1,31 @@
-import { logger } from "./logger";
-
 /**
- * Interface pour les options de mise en cache
+ * Service de cache optimisé pour les requêtes fréquentes
+ * Implémente un cache en mémoire avec expiration et tags pour l'invalidation
  */
-export interface CacheOptions {
-  ttl: number;          // Durée de vie en millisecondes
-  staleWhileRevalidate: boolean; // Renvoyer les données périmées pendant la revalidation
-  tags?: string[];      // Tags pour l'invalidation groupée
-}
 
-/**
- * Interface pour une entrée de cache
- */
-interface CacheEntry<T> {
+// Type pour les entrées du cache
+type CacheEntry<T> = {
   value: T;
   expiresAt: number;
   tags: string[];
-  isRevalidating?: boolean;
-}
+};
+
+// Type pour les statistiques du cache
+type CacheStats = {
+  size: number;
+  hits: number;
+  misses: number;
+  hitRate: number;
+};
 
 /**
- * Service de mise en cache en mémoire
- * Permet de mettre en cache des données pour réduire les appels à la base de données
+ * Service de cache en mémoire avec expiration et tags
  */
 export class CacheService {
   private static instance: CacheService;
   private cache: Map<string, CacheEntry<any>> = new Map();
-  private defaultTTL: number = 60 * 1000; // 1 minute par défaut
-  private cacheLogger = logger.createContextLogger('cache');
+  private hits: number = 0;
+  private misses: number = 0;
 
   /**
    * Constructeur privé pour le singleton
@@ -45,164 +43,100 @@ export class CacheService {
   }
 
   /**
-   * Définir la durée de vie par défaut du cache
-   * @param ttl Durée de vie en millisecondes
-   */
-  public setDefaultTTL(ttl: number): void {
-    this.defaultTTL = ttl;
-  }
-
-  /**
-   * Mettre en cache une valeur
-   * @param key Clé de cache
+   * Définir une valeur dans le cache
+   * @param key Clé du cache
    * @param value Valeur à mettre en cache
-   * @param options Options de mise en cache
+   * @param ttl Durée de vie en millisecondes (par défaut 5 minutes)
+   * @param tags Tags pour l'invalidation groupée
    */
-  public set<T>(key: string, value: T, options?: Partial<CacheOptions>): void {
-    const ttl = options?.ttl ?? this.defaultTTL;
-    const tags = options?.tags ?? [];
+  public set<T>(key: string, value: T, ttl: number = 300000, tags: string[] = []): void {
+    const expiresAt = Date.now() + ttl;
     
     this.cache.set(key, {
       value,
-      expiresAt: Date.now() + ttl,
+      expiresAt,
       tags
     });
     
-    this.cacheLogger.debug(`Mise en cache de la clé "${key}"`, {
-      metadata: {
-        ttl,
-        tags,
-        expiresAt: new Date(Date.now() + ttl).toISOString()
-      }
+    console.debug(`Mise en cache de la clé "${key}"`, {
+      ttl,
+      tags,
+      expiresAt: new Date(expiresAt).toISOString()
     });
   }
 
   /**
    * Récupérer une valeur du cache
-   * @param key Clé de cache
-   * @returns Valeur mise en cache ou undefined si non trouvée ou expirée
+   * @param key Clé du cache
+   * @returns La valeur mise en cache ou null si non trouvée ou expirée
    */
-  public get<T>(key: string): T | undefined {
+  public get<T>(key: string): T | null {
     const entry = this.cache.get(key);
     
+    // Vérifier si l'entrée existe
     if (!entry) {
-      this.cacheLogger.debug(`Cache miss pour la clé "${key}"`);
-      return undefined;
+      this.misses++;
+      console.debug(`Cache miss pour la clé "${key}"`);
+      return null;
     }
     
-    const now = Date.now();
-    
-    // Si l'entrée est expirée
-    if (now > entry.expiresAt) {
-      this.cacheLogger.debug(`Entrée expirée pour la clé "${key}"`);
-      return undefined;
+    // Vérifier si l'entrée est expirée
+    if (entry.expiresAt < Date.now()) {
+      this.cache.delete(key);
+      this.misses++;
+      console.debug(`Entrée expirée pour la clé "${key}"`);
+      return null;
     }
     
-    this.cacheLogger.debug(`Cache hit pour la clé "${key}"`);
+    // Entrée valide
+    this.hits++;
+    console.debug(`Cache hit pour la clé "${key}"`);
     return entry.value as T;
   }
 
   /**
-   * Récupérer une valeur du cache avec gestion des données périmées
-   * @param key Clé de cache
-   * @param fetchFn Fonction pour récupérer les données fraîches
-   * @param options Options de mise en cache
-   * @returns Valeur mise en cache ou résultat de fetchFn
+   * Récupérer une valeur du cache ou l'initialiser si non trouvée
+   * @param key Clé du cache
+   * @param factory Fonction pour générer la valeur si non trouvée
+   * @param ttl Durée de vie en millisecondes
+   * @param tags Tags pour l'invalidation groupée
+   * @returns La valeur mise en cache
    */
   public async getOrSet<T>(
     key: string,
-    fetchFn: () => Promise<T>,
-    options?: Partial<CacheOptions>
+    factory: () => Promise<T>,
+    ttl: number = 300000,
+    tags: string[] = []
   ): Promise<T> {
-    const entry = this.cache.get(key);
-    const now = Date.now();
-    const staleWhileRevalidate = options?.staleWhileRevalidate ?? false;
-    
-    // Si l'entrée existe et n'est pas expirée
-    if (entry && now <= entry.expiresAt) {
-      this.cacheLogger.debug(`Cache hit pour la clé "${key}"`);
-      return entry.value as T;
+    // Vérifier si la valeur est déjà en cache
+    const cachedValue = this.get<T>(key);
+    if (cachedValue !== null) {
+      return cachedValue;
     }
     
-    // Si l'entrée existe, est expirée, mais staleWhileRevalidate est activé
-    if (entry && staleWhileRevalidate && !entry.isRevalidating) {
-      // Marquer l'entrée comme en cours de revalidation
-      entry.isRevalidating = true;
-      
-      // Revalider en arrière-plan
-      this.revalidateEntry(key, fetchFn, options).catch(error => {
-        const errorObj = error instanceof Error ? error : new Error(String(error));
-        this.cacheLogger.error(`Erreur lors de la revalidation de la clé "${key}"`, errorObj);
-      });
-      
-      this.cacheLogger.debug(`Renvoi de données périmées pour la clé "${key}" pendant la revalidation`);
-      return entry.value as T;
-    }
+    // Générer la valeur
+    const value = await factory();
     
-    // Sinon, récupérer les données fraîches
-    try {
-      this.cacheLogger.debug(`Récupération de données fraîches pour la clé "${key}"`);
-      const freshValue = await fetchFn();
-      
-      // Mettre en cache les nouvelles données
-      this.set(key, freshValue, options);
-      
-      return freshValue;
-    } catch (error) {
-      // En cas d'erreur, renvoyer les données périmées si disponibles
-      if (entry && staleWhileRevalidate) {
-        this.cacheLogger.warn(`Erreur lors de la récupération de données fraîches pour la clé "${key}", renvoi des données périmées`, {
-          metadata: { errorMessage: error instanceof Error ? error.message : String(error) }
-        });
-        return entry.value as T;
-      }
-      
-      // Sinon, propager l'erreur
-      throw error;
-    }
-  }
-
-  /**
-   * Revalider une entrée de cache en arrière-plan
-   */
-  private async revalidateEntry<T>(
-    key: string,
-    fetchFn: () => Promise<T>,
-    options?: Partial<CacheOptions>
-  ): Promise<void> {
-    try {
-      const freshValue = await fetchFn();
-      
-      // Mettre à jour l'entrée de cache
-      this.set(key, freshValue, options);
-      
-      this.cacheLogger.debug(`Revalidation réussie pour la clé "${key}"`);
-    } catch (error) {
-      const errorObj = error instanceof Error ? error : new Error(String(error));
-      this.cacheLogger.error(`Échec de la revalidation pour la clé "${key}"`, errorObj);
-    } finally {
-      // Réinitialiser le flag de revalidation
-      const entry = this.cache.get(key);
-      if (entry) {
-        entry.isRevalidating = false;
-      }
-    }
+    // Mettre en cache
+    this.set(key, value, ttl, tags);
+    
+    return value;
   }
 
   /**
    * Supprimer une entrée du cache
-   * @param key Clé de cache
+   * @param key Clé du cache
    */
   public delete(key: string): void {
     this.cache.delete(key);
-    this.cacheLogger.debug(`Suppression de la clé "${key}" du cache`);
   }
 
   /**
-   * Invalider toutes les entrées de cache avec un tag spécifique
+   * Invalider toutes les entrées avec un tag spécifique
    * @param tag Tag à invalider
+   * @returns Nombre d'entrées invalidées
    */
-  public invalidateByTag(tag: string): void {
+  public invalidateByTag(tag: string): number {
     let count = 0;
     
     for (const [key, entry] of this.cache.entries()) {
@@ -212,52 +146,52 @@ export class CacheService {
       }
     }
     
-    this.cacheLogger.info(`Invalidation de ${count} entrées avec le tag "${tag}"`);
+    console.debug(`Invalidation de ${count} entrées avec le tag "${tag}"`);
+    return count;
   }
 
   /**
    * Vider complètement le cache
    */
   public clear(): void {
-    const count = this.cache.size;
     this.cache.clear();
-    this.cacheLogger.info(`Cache vidé (${count} entrées supprimées)`);
+    console.debug("Cache vidé");
+  }
+
+  /**
+   * Nettoyer les entrées expirées
+   * @returns Nombre d'entrées nettoyées
+   */
+  public cleanup(): number {
+    const now = Date.now();
+    let count = 0;
+    
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.expiresAt < now) {
+        this.cache.delete(key);
+        count++;
+      }
+    }
+    
+    console.debug(`Nettoyage de ${count} entrées expirées`);
+    return count;
   }
 
   /**
    * Obtenir des statistiques sur le cache
    */
-  public getStats(): {
-    size: number;
-    activeEntries: number;
-    expiredEntries: number;
-    tags: Record<string, number>;
-  } {
-    const now = Date.now();
-    let activeEntries = 0;
-    let expiredEntries = 0;
-    const tagCounts: Record<string, number> = {};
-    
-    for (const entry of this.cache.values()) {
-      if (now <= entry.expiresAt) {
-        activeEntries++;
-      } else {
-        expiredEntries++;
-      }
-      
-      for (const tag of entry.tags) {
-        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-      }
-    }
+  public getStats(): CacheStats {
+    const totalRequests = this.hits + this.misses;
+    const hitRate = totalRequests > 0 ? this.hits / totalRequests : 0;
     
     return {
       size: this.cache.size,
-      activeEntries,
-      expiredEntries,
-      tags: tagCounts
+      hits: this.hits,
+      misses: this.misses,
+      hitRate
     };
   }
 }
 
-// Exporter une instance par défaut du service de cache
-export const cacheService = CacheService.getInstance(); 
+// Exporter une instance singleton
+export const cacheService = CacheService.getInstance();

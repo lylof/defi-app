@@ -1,176 +1,139 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "./prisma";
 
-/**
- * Interface pour les statistiques de santé de la base de données
- */
-export interface DbHealthStats {
-  isConnected: boolean;
-  lastCheckTime: Date;
+// Cache des health checks pour éviter les requêtes inutiles
+type HealthCache = {
+  timestamp: number;
+  status: boolean;
+  stats: DatabaseStats;
+};
+
+// Interface pour les statistiques de base de données
+interface DatabaseStats {
   connectionErrors: number;
   averageQueryTime: number | null;
-  status: 'healthy' | 'degraded' | 'critical';
+  queriesPerMinute: number;
+  lastCheckTime: string;
 }
+
+// Durée de vie du cache en millisecondes (10 secondes)
+const HEALTH_CACHE_TTL = 10000;
+
+let healthCache: HealthCache | null = null;
 
 /**
- * Service pour surveiller la santé de la base de données
- * Fournit des méthodes pour vérifier l'état de la connexion et obtenir des statistiques
+ * Service optimisé pour les vérifications de santé de la base de données
+ * Utilise un mécanisme de cache pour réduire le nombre de requêtes
  */
 export class DbHealthService {
-  private static instance: DbHealthService;
-  private isConnected: boolean = true;
-  private lastCheckTime: Date = new Date();
-  private connectionErrors: number = 0;
-  private queryTimes: number[] = [];
-  private maxQueryTimesToKeep: number = 100;
-  private checkInterval: NodeJS.Timeout | null = null;
-  private readonly checkIntervalTime: number = 60000; // 1 minute
-
   /**
-   * Constructeur privé pour le singleton
+   * Vérifie la santé de la connexion à la base de données avec mise en cache
+   * pour éviter les requêtes trop fréquentes et améliorer les performances
    */
-  private constructor() {
-    this.startHealthCheck();
-  }
-
-  /**
-   * Obtenir l'instance unique du service
-   */
-  public static getInstance(): DbHealthService {
-    if (!DbHealthService.instance) {
-      DbHealthService.instance = new DbHealthService();
-    }
-    return DbHealthService.instance;
-  }
-
-  /**
-   * Démarrer la vérification périodique de la santé de la base de données
-   */
-  private startHealthCheck(): void {
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval);
-    }
-
-    this.checkInterval = setInterval(async () => {
-      await this.checkHealth();
-    }, this.checkIntervalTime);
-
-    // Effectuer une vérification immédiate
-    this.checkHealth();
-  }
-
-  /**
-   * Vérifier la santé de la base de données
-   */
-  public async checkHealth(): Promise<boolean> {
+  static async checkHealth(): Promise<{
+    isConnected: boolean;
+    stats: DatabaseStats;
+  }> {
     try {
-      const startTime = Date.now();
-      
+      // Vérifier si nous avons un cache valide
+      const now = Date.now();
+      if (healthCache && now - healthCache.timestamp < HEALTH_CACHE_TTL) {
+        console.debug("Utilisation du cache pour le health check de la base de données");
+        return {
+          isConnected: healthCache.status,
+          stats: healthCache.stats
+        };
+      }
+
       // Exécuter une requête simple pour vérifier la connexion
+      const startTime = performance.now();
+      
+      // @ts-ignore - Accéder aux propriétés internes de notre class PrismaClientWithReconnect
+      const connectionErrors = (prisma as any).connectionErrors || 0;
+      // @ts-ignore - Accéder aux propriétés internes de notre class PrismaClientWithReconnect
+      const totalQueries = (prisma as any).totalQueries || 0;
+      // @ts-ignore - Accéder aux propriétés internes de notre class PrismaClientWithReconnect
+      const connectionCreationTime = (prisma as any).connectionCreationTime || Date.now();
+      
       await prisma.$queryRaw`SELECT 1 as health_check`;
       
-      const endTime = Date.now();
+      const endTime = performance.now();
       const queryTime = endTime - startTime;
-      
-      // Enregistrer le temps de requête
-      this.addQueryTime(queryTime);
-      
-      this.isConnected = true;
-      this.lastCheckTime = new Date();
-      
-      return true;
+
+      // Calculer les statistiques
+      const stats: DatabaseStats = {
+        connectionErrors,
+        averageQueryTime: queryTime,
+        queriesPerMinute: totalQueries / ((Date.now() - connectionCreationTime) / 60000 || 1),
+        lastCheckTime: new Date().toISOString()
+      };
+
+      // Mettre à jour le cache
+      healthCache = {
+        timestamp: now,
+        status: true,
+        stats
+      };
+
+      return {
+        isConnected: true,
+        stats
+      };
     } catch (error) {
-      console.error("Erreur lors de la vérification de la santé de la base de données:", error);
-      this.isConnected = false;
-      this.lastCheckTime = new Date();
-      this.connectionErrors++;
+      console.error("Erreur lors de la vérification de santé de la base de données", error);
+
+      // Mettre à jour le cache avec l'état d'erreur
+      const stats: DatabaseStats = {
+        // @ts-ignore - Accéder aux propriétés internes de notre class PrismaClientWithReconnect
+        connectionErrors: ((prisma as any).connectionErrors || 0) + 1,
+        averageQueryTime: null,
+        queriesPerMinute: 0,
+        lastCheckTime: new Date().toISOString()
+      };
+
+      healthCache = {
+        timestamp: Date.now(),
+        status: false,
+        stats
+      };
+
+      return {
+        isConnected: false,
+        stats
+      };
+    }
+  }
+
+  /**
+   * Récupère les statistiques basiques de la base de données
+   * Nombre d'utilisateurs, défis, soumissions, etc.
+   */
+  static async getBasicStats(): Promise<{
+    users: number;
+    challenges: number;
+    submissions: number;
+  }> {
+    try {
+      // Utiliser Promise.all pour paralléliser les requêtes et améliorer les performances
+      const [users, challenges, submissions] = await Promise.all([
+        prisma.user.count(),
+        prisma.challenge.count(),
+        prisma.submission.count()
+      ]);
+
+      return {
+        users,
+        challenges,
+        submissions
+      };
+    } catch (error) {
+      console.error("Erreur lors de la récupération des statistiques de base de données", error);
       
-      return false;
-    }
-  }
-
-  /**
-   * Ajouter un temps de requête à l'historique
-   */
-  private addQueryTime(time: number): void {
-    this.queryTimes.push(time);
-    
-    // Limiter le nombre de temps de requête conservés
-    if (this.queryTimes.length > this.maxQueryTimesToKeep) {
-      this.queryTimes.shift();
-    }
-  }
-
-  /**
-   * Calculer le temps moyen des requêtes
-   */
-  private getAverageQueryTime(): number | null {
-    if (this.queryTimes.length === 0) {
-      return null;
-    }
-    
-    const sum = this.queryTimes.reduce((acc, time) => acc + time, 0);
-    return sum / this.queryTimes.length;
-  }
-
-  /**
-   * Déterminer le statut de santé de la base de données
-   */
-  private getHealthStatus(): 'healthy' | 'degraded' | 'critical' {
-    if (!this.isConnected) {
-      return 'critical';
-    }
-    
-    const avgTime = this.getAverageQueryTime();
-    
-    if (avgTime === null) {
-      return this.connectionErrors > 0 ? 'degraded' : 'healthy';
-    }
-    
-    if (avgTime > 500 || this.connectionErrors > 5) {
-      return 'degraded';
-    }
-    
-    return 'healthy';
-  }
-
-  /**
-   * Obtenir les statistiques de santé de la base de données
-   */
-  public getHealthStats(): DbHealthStats {
-    return {
-      isConnected: this.isConnected,
-      lastCheckTime: this.lastCheckTime,
-      connectionErrors: this.connectionErrors,
-      averageQueryTime: this.getAverageQueryTime(),
-      status: this.getHealthStatus()
-    };
-  }
-
-  /**
-   * Réinitialiser les statistiques d'erreur
-   */
-  public resetErrorStats(): void {
-    this.connectionErrors = 0;
-    this.queryTimes = [];
-  }
-
-  /**
-   * Nettoyer les ressources lors de la fermeture de l'application
-   */
-  public cleanup(): void {
-    if (this.checkInterval) {
-      clearInterval(this.checkInterval);
-      this.checkInterval = null;
+      // Retourner des valeurs par défaut en cas d'erreur
+      return {
+        users: 0,
+        challenges: 0,
+        submissions: 0
+      };
     }
   }
 }
-
-// Initialiser le service au démarrage de l'application
-export const dbHealthService = DbHealthService.getInstance();
-
-// Nettoyer les ressources lors de la fermeture de l'application
-if (typeof window === 'undefined') { // Seulement côté serveur
-  process.on('beforeExit', () => {
-    dbHealthService.cleanup();
-  });
-} 
