@@ -24,19 +24,26 @@ export function NavItem({ href, title, description, icon }: NavItemProps) {
     <Link
       href={href}
       className={cn(
-        "admin-nav-item group flex flex-col rounded-lg px-3 py-2 transition-colors",
+        "admin-nav-item-enhanced group flex flex-col rounded-lg px-3 py-2 transition-colors",
         isActive
-          ? "bg-primary/10 text-primary"
+          ? "active bg-primary/10 text-primary"
           : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
       )}
     >
       <div className="flex items-center gap-3">
-        <Icon className={cn(
-          "h-5 w-5 transition-transform group-hover:scale-110",
-          isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-        )} />
+        <div className={cn(
+          "flex items-center justify-center w-8 h-8 rounded-lg transition-all",
+          isActive 
+            ? "bg-primary/15 text-primary" 
+            : "text-muted-foreground bg-transparent group-hover:bg-primary/5 group-hover:text-primary"
+        )}>
+          <Icon className={cn(
+            "h-4.5 w-4.5 transition-transform group-hover:scale-110",
+            isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+          )} />
+        </div>
         <div>
-          <div className={cn("font-medium", isActive ? "text-primary" : "text-foreground")}>
+          <div className={cn("font-medium text-sm", isActive ? "text-primary" : "text-foreground")}>
             {title}
           </div>
           {description && (

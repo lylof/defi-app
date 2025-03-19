@@ -207,7 +207,7 @@ export function LeaderboardCard({ challengeId }: LeaderboardCardProps) {
             <div className="flex items-center gap-3">
               {/* Badge de rang avec dégradé selon la position */}
               <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getMedalColor(participant.rank)} flex items-center justify-center shadow-sm`}>
-                {participant.rank <= 3 ? (
+              {participant.rank <= 3 ? (
                   participant.rank === 1 ? (
                     <Trophy className="h-4 w-4 text-white" />
                   ) : (

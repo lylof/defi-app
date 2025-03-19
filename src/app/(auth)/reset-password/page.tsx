@@ -7,11 +7,12 @@ export const metadata: Metadata = {
   description: "Réinitialisez votre mot de passe",
 };
 
-export default function ResetPasswordPage({
-  searchParams,
-}: {
+interface PageProps {
+  params: Record<string, never>;
   searchParams: { token?: string };
-}) {
+}
+
+export default function ResetPasswordPage({ searchParams }: PageProps) {
   const token = searchParams.token || "";
 
   return (

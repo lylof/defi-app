@@ -102,7 +102,6 @@ a, button, input, select, textarea, [role="button"] {
 .fouc-ready {
   opacity: 1;
 }
-
 /* Animations inspirées du design Apple */
 @keyframes blob {
   0% {

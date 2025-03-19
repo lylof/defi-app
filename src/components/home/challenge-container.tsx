@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle, Award, Users, ArrowRight, Eye, Timer, Target, Code, BarChart, Zap } from "lucide-react";
+import { Clock, CheckCircle, Award, Users, ArrowRight, Eye, Timer, Target, Calendar, Code, BarChart, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from 'next/dynamic';

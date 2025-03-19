@@ -1,7 +1,55 @@
-# Suivi des Progrès
+# État d'Avancement du Projet
 
-## Fonctionnalités complétées
+## Ce Qui Fonctionne
 
+- ✅ **Page d'accueil** avec affichage du défi du jour
+- ✅ **Navigation par onglets** entre défis en cours, à venir et terminés
+- ✅ **Section newsletter** pour l'inscription des utilisateurs aux notifications
+- ✅ **Section "Pourquoi participer"** présentant les avantages de la participation aux défis
+- ✅ **Composant Leaderboard** affichant les meilleurs participants
+- ✅ **Composants de loading states** avec design minimaliste style Apple
+- ✅ **Système d'authentification** basique avec NextAuth.js
+- ✅ **Accès aux challenges** avec affichage des détails et objectifs
+
+## En Cours de Développement
+
+- 🔄 **Formulaire de soumission** pour les participations aux défis
+- 🔄 **Système de notification** pour les nouveaux défis et mises à jour
+- 🔄 **Optimisation des performances** sur la page d'accueil
+- 🔄 **Correction des bugs middleware** liés aux en-têtes de cache
+
+## À Développer
+
+- 📝 **Dashboard utilisateur** complet avec statistiques personnalisées
+- 📝 **Système de badges** pour récompenser les accomplissements
+- 📝 **Plateforme administrative** pour la gestion des défis
+- 📝 **Intégration des paiements** pour les fonctionnalités premium
+- 📝 **Fonction de partage social** des résultats et participations
+- 📝 **Mode hors-ligne** pour travailler sur les défis sans connexion internet
+
+## Problèmes Connus
+
+1. **Erreur middleware** : Problème avec l'application des en-têtes de cache
+   ```
+   TypeError: Cannot read properties of undefined (reading 'set')
+   ```
+
+2. **Import manquant** dans le composant `challenge-container.tsx` :
+   ```
+   Cannot find name 'Calendar'
+   ```
+
+3. **Performance** : Certains utilisateurs signalent des ralentissements lors du chargement initial des défis sur des connexions lentes.
+
+## Progression Globale
+
+Le projet est actuellement complété à environ 75%. Les fonctionnalités principales sont en place, avec un accent mis sur l'amélioration de l'expérience utilisateur et la stabilité de l'application.
+
+- **Frontend** : ~85% complété
+- **Backend API** : ~70% complété
+- **Authentification** : ~80% complété
+- **Système de défis** : ~75% complété
+- **Panneau administratif** : ~40% complété 
 ### Système de base
 - ✅ Configuration initiale du projet Next.js
 - ✅ Mise en place de TypeScript

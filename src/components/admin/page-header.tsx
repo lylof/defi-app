@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Bell, ChevronLeft, Search } from "lucide-react";
+import { Menu, Bell, ChevronLeft, Search, HelpCircle, Settings, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Sheet, 
@@ -10,6 +10,20 @@ import {
   SheetContent 
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
+import * as Icons from "lucide-react";
+import { NavItem } from "./nav-item";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { motion } from "framer-motion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import React from "react";
 
 // Définir le type des éléments de navigation
 interface NavItem {
@@ -25,51 +39,65 @@ const navItems: NavItem[] = [
     title: "Tableau de bord",
     description: "Vue d'ensemble et statistiques",
     href: "/admin",
-    icon: "layout-dashboard"
+    icon: "LayoutDashboard"
   },
   {
     title: "Gestion Utilisateurs",
     description: "Gérer les comptes et les rôles",
     href: "/admin/users",
-    icon: "users"
+    icon: "Users"
   },
   {
     title: "Gestion des Défis",
     description: "Créer et gérer les défis",
     href: "/admin/challenges",
-    icon: "folder-kanban"
+    icon: "Trophy"
   },
   {
     title: "Catégories",
     description: "Organiser les défis par catégorie",
     href: "/admin/categories",
-    icon: "tags"
+    icon: "Tags"
   },
   {
     title: "Soumissions",
     description: "Évaluer les soumissions des participants",
     href: "/admin/submissions",
-    icon: "clipboard-check"
+    icon: "ClipboardCheck"
   },
   {
     title: "Badges",
     description: "Gérer les badges et récompenses",
     href: "/admin/badges",
-    icon: "award"
+    icon: "Award"
   },
   {
     title: "Logs d'activité",
     description: "Historique des actions administratives",
     href: "/admin/logs",
-    icon: "history"
+    icon: "History"
   },
   {
     title: "Santé du Système",
     description: "Surveiller l'état du système",
     href: "/admin/health",
-    icon: "line-chart"
+    icon: "LineChart"
   }
 ];
+
+// Function to get user's initial letters for avatar
+const getInitials = (name: string = "Admin User") => {
+  const nameParts = name.split(' ');
+  if (nameParts.length >= 2) {
+    return `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
+// Ajouter une interface pour les props d'icône
+interface IconProps {
+  className?: string;
+}
 
 export function PageHeader() {
   const pathname = usePathname();
@@ -120,65 +148,135 @@ export function PageHeader() {
     return `/${segments.slice(0, 2).join('/')}`;
   };
 
+  const fadeInAnimationVariants = {
+    initial: { opacity: 0, y: -10 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+  };
+
   return (
-    <div className="flex w-full items-center justify-between">
+    <motion.div 
+      className="flex w-full items-center justify-between"
+      initial="initial"
+      animate="animate"
+      variants={fadeInAnimationVariants}
+    >
       <div className="flex items-center gap-4">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
+            <Button variant="ghost" size="icon" className="md:hidden admin-btn-enhanced">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-72 p-0">
+          <SheetContent side="left" className="w-80 p-0 admin-sidebar-enhanced">
             <div className="flex flex-col h-full">
-              <div className="px-4 py-6 border-b">
+              <div className="px-6 py-6 border-b">
                 <Link href="/admin" className="flex items-center gap-2 font-semibold text-xl">
-                  <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-                    LPT
+                  <div className="w-9 h-9 bg-gradient-to-br from-primary to-blue-400 rounded-xl flex items-center justify-center text-white">
+                    <span className="text-sm font-bold">LPT</span>
                   </div>
-                  <span>Admin</span>
+                  <span className="ml-2">Admin</span>
                 </Link>
               </div>
               
-              <nav className="flex-1 overflow-y-auto p-4">
-                <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">Menu principal</p>
-                <div className="space-y-1 mb-6">
+              <div className="admin-profile-section mx-6 my-5 admin-card-enhanced p-4 group">
+                <div className="flex items-center gap-3 mb-2">
+                  <Avatar className="h-10 w-10 border border-primary/10 group-hover:border-primary/30 transition-all">
+                    <AvatarImage src="/placeholder-user.jpg" />
+                    <AvatarFallback className="bg-primary/10 text-primary font-medium">{getInitials()}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium text-sm">Admin User</p>
+                    <p className="text-xs text-muted-foreground">admin@example.com</p>
+                  </div>
+                </div>
+                <div className="relative w-full mt-3">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    type="search" 
+                    placeholder="Rechercher..." 
+                    className="pl-9 bg-background/50 focus:bg-background h-9 w-full admin-input-enhanced text-sm" 
+                  />
+                </div>
+              </div>
+              
+              <nav className="flex-1 px-4 pb-4 overflow-y-auto">
+                <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider px-4">Menu principal</p>
+                <div className="space-y-1">
                   {navItems.slice(0, 5).map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    const IconComponent = item.icon && Icons[item.icon as keyof typeof Icons] as React.ComponentType<IconProps>;
+                    
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`admin-nav-item flex items-center px-3 py-2 rounded-md ${isActive ? "bg-primary/10 text-primary font-medium" : ""}`}
+                        className={`admin-nav-item-enhanced group flex items-center px-4 py-2 rounded-lg ${
+                          isActive 
+                            ? "active bg-primary/10 text-primary" 
+                            : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                        }`}
                       >
-                        {item.title}
+                        <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
+                          isActive 
+                            ? "bg-primary/15 text-primary" 
+                            : "text-muted-foreground bg-transparent group-hover:bg-primary/5 group-hover:text-primary"
+                        }`}>
+                          {IconComponent && <IconComponent className="h-4.5 w-4.5 transition-transform group-hover:scale-110" />}
+                        </div>
+                        <span className="ml-3 font-medium">{item.title}</span>
                       </Link>
                     );
                   })}
                 </div>
                 
-                <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">Configuration</p>
+                <p className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider px-4 mt-6">Configuration</p>
                 <div className="space-y-1">
                   {navItems.slice(5).map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    const IconComponent = item.icon && Icons[item.icon as keyof typeof Icons] as React.ComponentType<IconProps>;
+                    
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`admin-nav-item flex items-center px-3 py-2 rounded-md ${isActive ? "bg-primary/10 text-primary font-medium" : ""}`}
+                        className={`admin-nav-item-enhanced group flex items-center px-4 py-2 rounded-lg ${
+                          isActive 
+                            ? "active bg-primary/10 text-primary" 
+                            : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
+                        }`}
                       >
-                        {item.title}
+                        <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
+                          isActive 
+                            ? "bg-primary/15 text-primary" 
+                            : "text-muted-foreground bg-transparent group-hover:bg-primary/5 group-hover:text-primary"
+                        }`}>
+                          {IconComponent && <IconComponent className="h-4.5 w-4.5 transition-transform group-hover:scale-110" />}
+                        </div>
+                        <span className="ml-3 font-medium">{item.title}</span>
                       </Link>
                     );
                   })}
                 </div>
               </nav>
               
-              <div className="p-4 border-t mt-auto">
-                <Button variant="outline" size="sm" asChild className="w-full justify-center">
-                  <Link href="/api/auth/signout">Déconnexion</Link>
-                </Button>
+              <div className="px-4 pt-4 pb-6 border-t mt-auto">
+                <div className="space-y-2">
+                  <Button variant="ghost" size="sm" className="admin-btn-enhanced secondary justify-start w-full">
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    Centre d'aide
+                  </Button>
+                  <Button variant="ghost" size="sm" className="admin-btn-enhanced secondary justify-start w-full">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Paramètres
+                  </Button>
+                  <Button variant="outline" size="sm" asChild className="admin-btn-enhanced secondary justify-start w-full hover:text-red-500">
+                    <Link href="/api/auth/signout">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Déconnexion
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </div>
           </SheetContent>
@@ -189,7 +287,7 @@ export function PageHeader() {
             variant="ghost" 
             size="sm" 
             asChild 
-            className="flex items-center text-muted-foreground hover:text-foreground mr-2"
+            className="flex items-center text-muted-foreground hover:text-foreground mr-2 admin-btn-enhanced secondary"
           >
             <Link href={getParentUrl()}>
               <ChevronLeft className="h-4 w-4 mr-1" />
@@ -198,19 +296,60 @@ export function PageHeader() {
           </Button>
         )}
         
-        <h1 className="text-xl font-semibold tracking-tight">{getPageTitle()}</h1>
+        <motion.h1 
+          className="text-xl font-semibold tracking-tight"
+          initial={{ opacity: 0, x: -5 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+        >
+          {getPageTitle()}
+        </motion.h1>
       </div>
       
-      <div className="hidden md:flex items-center gap-4 w-80">
-        <div className="relative w-full">
+      <div className="flex items-center gap-4">
+        <div className="relative w-64 hidden md:block admin-scale-in">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input 
             type="search" 
             placeholder="Rechercher..." 
-            className="pl-9 bg-background/50 focus:bg-background h-9" 
+            className="pl-9 bg-background/50 focus:bg-background h-9 admin-input-enhanced" 
           />
         </div>
+        
+        <Button variant="ghost" size="icon" className="admin-btn-enhanced rounded-full">
+          <Bell className="h-5 w-5" />
+          <span className="sr-only">Notifications</span>
+          <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary flex items-center justify-center text-[10px] text-white font-semibold">3</span>
+        </Button>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full admin-btn-enhanced p-0">
+              <Avatar className="h-9 w-9 border border-primary/10">
+                <AvatarImage src="/placeholder-user.jpg" />
+                <AvatarFallback className="bg-primary/10 text-primary font-medium">{getInitials()}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 admin-card-enhanced">
+            <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Paramètres</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-red-500">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Déconnexion</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-    </div>
+    </motion.div>
   );
 } 

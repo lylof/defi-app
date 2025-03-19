@@ -1,0 +1,609 @@
+/* Style amélioré pour l'interface administrateur - Esthétique Apple/iOS */
+
+/* Variables avancées */
+:root {
+  --admin-glassmorphism: rgba(255, 255, 255, 0.8);
+  --admin-glassmorphism-dark: rgba(26, 26, 28, 0.85);
+  --admin-neu-shadow-light: 0 10px 30px rgba(0, 0, 0, 0.05);
+  --admin-neu-shadow-dark: 0 10px 30px rgba(0, 0, 0, 0.2);
+  --admin-highlight: rgba(255, 255, 255, 0.8);
+  --admin-highlight-dark: rgba(255, 255, 255, 0.05);
+  --admin-card-radius: 16px;
+  --admin-transition-bezier: cubic-bezier(0.16, 1, 0.3, 1);
+  --admin-spring-transition: 0.4s var(--admin-transition-bezier);
+}
+
+/* Ajouter ici, avant les autres styles */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Cartes améliorées avec effet glassmorphism */
+.admin-card-enhanced {
+  background: var(--admin-glassmorphism);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--admin-card-radius);
+  border: 1px solid var(--admin-highlight);
+  box-shadow: var(--admin-neu-shadow-light);
+  transition: all var(--admin-spring-transition);
+  overflow: hidden;
+}
+
+.dark .admin-card-enhanced {
+  background: var(--admin-glassmorphism-dark);
+  border-color: var(--admin-highlight-dark);
+  box-shadow: var(--admin-neu-shadow-dark);
+}
+
+.admin-card-enhanced:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* Cartes avec effet 3D au survol */
+.admin-card-3d {
+  transition: transform 0.5s var(--admin-transition-bezier);
+  perspective: 1000px;
+}
+
+.admin-card-3d:hover {
+  transform: rotateX(2deg) rotateY(-2deg) translateY(-8px);
+}
+
+/* Tableau amélioré avec rayures subtiles et ombres douces */
+.admin-table-enhanced {
+  border-radius: var(--admin-card-radius);
+  overflow: hidden;
+  border: 1px solid rgba(234, 234, 234, 0.7);
+  background: var(--admin-glassmorphism);
+  backdrop-filter: blur(12px);
+}
+
+.dark .admin-table-enhanced {
+  background: var(--admin-glassmorphism-dark);
+  border-color: rgba(50, 50, 50, 0.7);
+}
+
+.admin-table-enhanced th {
+  background: rgba(248, 248, 248, 0.7);
+  backdrop-filter: blur(12px);
+  padding: 16px 20px;
+  font-weight: 600;
+  color: #333;
+  text-transform: none;
+  letter-spacing: -0.01em;
+  font-size: 0.9rem;
+  border-bottom: 1px solid rgba(234, 234, 234, 0.7);
+}
+
+.dark .admin-table-enhanced th {
+  background: rgba(40, 40, 40, 0.7);
+  color: #e0e0e0;
+  border-bottom: 1px solid rgba(50, 50, 50, 0.7);
+}
+
+.admin-table-enhanced td {
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(234, 234, 234, 0.7);
+  transition: background-color 0.3s ease;
+}
+
+.dark .admin-table-enhanced td {
+  border-bottom: 1px solid rgba(50, 50, 50, 0.7);
+}
+
+.admin-table-enhanced tr:hover td {
+  background: rgba(0, 113, 227, 0.04);
+}
+
+.dark .admin-table-enhanced tr:hover td {
+  background: rgba(0, 113, 227, 0.08);
+}
+
+.admin-table-enhanced tr:nth-child(even) td {
+  background: rgba(248, 248, 248, 0.5);
+}
+
+.dark .admin-table-enhanced tr:nth-child(even) td {
+  background: rgba(40, 40, 40, 0.5);
+}
+
+/* Amélioration des lignes de tableau avec animation */
+.admin-table-row-enhanced {
+  transition: transform 0.3s var(--admin-transition-bezier), box-shadow 0.3s var(--admin-transition-bezier);
+  animation: fadeInUp 0.5s var(--admin-transition-bezier) forwards;
+  opacity: 0;
+}
+
+.admin-table-row-enhanced:hover {
+  transform: translateX(4px);
+  background: rgba(0, 113, 227, 0.04);
+  z-index: 10;
+  position: relative;
+}
+
+.dark .admin-table-row-enhanced:hover {
+  background: rgba(0, 113, 227, 0.08);
+}
+
+/* Navigation améliorée */
+.admin-nav-enhanced {
+  background: var(--admin-glassmorphism);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  margin: 12px;
+  border: 1px solid var(--admin-highlight);
+  box-shadow: var(--admin-neu-shadow-light);
+  overflow: hidden;
+}
+
+.dark .admin-nav-enhanced {
+  background: var(--admin-glassmorphism-dark);
+  border-color: var(--admin-highlight-dark);
+  box-shadow: var(--admin-neu-shadow-dark);
+}
+
+/* Navigation avancée avec effets d'icônes */
+.admin-nav-item-enhanced {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin: 4px 8px;
+  transition: all 0.3s var(--admin-transition-bezier);
+  color: var(--foreground);
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-nav-item-enhanced .icon {
+  margin-right: 12px;
+  transition: all 0.3s var(--admin-transition-bezier);
+}
+
+.admin-nav-item-enhanced:hover {
+  background: rgba(0, 0, 0, 0.03);
+  transform: translateX(4px);
+}
+
+.dark .admin-nav-item-enhanced:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-nav-item-enhanced:hover .icon {
+  transform: scale(1.1);
+}
+
+.admin-nav-item-enhanced.active {
+  background: rgba(0, 113, 227, 0.1);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.admin-nav-item-enhanced.active .icon {
+  color: var(--primary);
+}
+
+/* Animations pour les cartes statistiques */
+.admin-stat-card-enhanced {
+  background: var(--admin-glassmorphism);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--admin-card-radius);
+  padding: 24px;
+  border: 1px solid var(--admin-highlight);
+  box-shadow: var(--admin-neu-shadow-light);
+  transition: all var(--admin-spring-transition);
+  overflow: hidden;
+  position: relative;
+}
+
+.dark .admin-stat-card-enhanced {
+  background: var(--admin-glassmorphism-dark);
+  border-color: var(--admin-highlight-dark);
+  box-shadow: var(--admin-neu-shadow-dark);
+}
+
+.admin-stat-card-enhanced:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 113, 227, 0.3);
+}
+
+.admin-stat-card-enhanced::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2),
+    rgba(255, 255, 255, 0)
+  );
+  transition: opacity 0.3s var(--admin-transition-bezier);
+}
+
+.admin-stat-card-enhanced:hover::after {
+  opacity: 1;
+}
+
+.admin-stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--primary), #42a5f5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.03em;
+}
+
+.admin-stat-label {
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+/* Boutons améliorés */
+.admin-btn-enhanced {
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s var(--admin-transition-bezier);
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-btn-enhanced.primary {
+  background: linear-gradient(135deg, var(--primary), #42a5f5);
+  color: white;
+  border: none;
+}
+
+.admin-btn-enhanced.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 113, 227, 0.25);
+}
+
+.admin-btn-enhanced.secondary {
+  background: rgba(0, 113, 227, 0.05);
+  color: var(--foreground);
+  border: 1px solid rgba(0, 113, 227, 0.1);
+}
+
+.dark .admin-btn-enhanced.secondary {
+  background: rgba(0, 113, 227, 0.1);
+  border-color: rgba(0, 113, 227, 0.2);
+}
+
+.admin-btn-enhanced.secondary:hover {
+  background: rgba(0, 113, 227, 0.1);
+  transform: translateY(-2px);
+  border-color: rgba(0, 113, 227, 0.2);
+}
+
+.dark .admin-btn-enhanced.secondary:hover {
+  background: rgba(0, 113, 227, 0.15);
+  border-color: rgba(0, 113, 227, 0.3);
+}
+
+/* Badges améliorés */
+.admin-badge-enhanced {
+  border-radius: 20px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.3s var(--admin-transition-bezier);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.admin-badge-enhanced.success {
+  background: rgba(46, 213, 115, 0.15);
+  color: #2ed573;
+  border-color: rgba(46, 213, 115, 0.3);
+}
+
+.admin-badge-enhanced.warning {
+  background: rgba(255, 168, 5, 0.15);
+  color: #ffa805;
+  border-color: rgba(255, 168, 5, 0.3);
+}
+
+.admin-badge-enhanced.danger {
+  background: rgba(255, 71, 87, 0.15);
+  color: #ff4757;
+  border-color: rgba(255, 71, 87, 0.3);
+}
+
+.admin-badge-enhanced.info {
+  background: rgba(0, 113, 227, 0.15);
+  color: var(--primary);
+  border-color: rgba(0, 113, 227, 0.3);
+}
+
+/* En-tête amélioré */
+.admin-header-enhanced {
+  background: var(--admin-glassmorphism);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--admin-highlight);
+  padding: 1.25rem 2rem;
+  margin-bottom: 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: box-shadow 0.3s ease;
+}
+
+.dark .admin-header-enhanced {
+  background: var(--admin-glassmorphism-dark);
+  border-color: var(--admin-highlight-dark);
+}
+
+/* Grille de statistiques améliorée */
+.admin-stats-grid-enhanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+/* Amélioration des Onglets */
+.admin-tab-enhanced {
+  position: relative;
+  transition: all 0.3s var(--admin-transition-bezier);
+  font-weight: 500;
+  border-radius: 10px;
+  padding: 6px 16px;
+  min-width: 120px;
+  border: none;
+  overflow: hidden;
+}
+
+.admin-tab-enhanced[data-state="active"] {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.2);
+}
+
+.admin-tab-enhanced[data-state="inactive"] {
+  background: rgba(0, 0, 0, 0.03);
+  color: var(--muted-foreground);
+}
+
+.dark .admin-tab-enhanced[data-state="inactive"] {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-tab-enhanced[data-state="inactive"]:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--foreground);
+}
+
+.dark .admin-tab-enhanced[data-state="inactive"]:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Amélioration des inputs */
+.admin-input-enhanced {
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: all 0.3s var(--admin-transition-bezier);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.dark .admin-input-enhanced {
+  background: rgba(30, 30, 35, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.admin-input-enhanced:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+  background: white;
+}
+
+.dark .admin-input-enhanced:focus {
+  background: #1e1e23;
+}
+
+/* Amélioration des sélecteurs */
+.admin-select-enhanced {
+  border-radius: 10px;
+  transition: all 0.3s var(--admin-transition-bezier);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark .admin-select-enhanced {
+  background: rgba(30, 30, 35, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.admin-select-enhanced:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+
+/* Amélioration du menu déroulant */
+.admin-dropdown-enhanced {
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: dropdownFadeIn 0.25s var(--admin-transition-bezier) forwards;
+}
+
+.dark .admin-dropdown-enhanced {
+  background: rgba(30, 30, 35, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.admin-dropdown-item-enhanced {
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  margin: 2px 4px;
+}
+
+.admin-dropdown-item-enhanced:hover {
+  background: rgba(0, 113, 227, 0.1);
+  transform: translateX(2px);
+}
+
+/* Amélioration sidebar */
+.admin-sidebar-enhanced {
+  background: var(--admin-glassmorphism);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--admin-highlight);
+}
+
+.dark .admin-sidebar-enhanced {
+  background: var(--admin-glassmorphism-dark);
+  border-color: var(--admin-highlight-dark);
+}
+
+/* Section de profil améliorée */
+.admin-profile-section {
+  transition: all var(--admin-spring-transition);
+}
+
+.admin-profile-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Animation de mise à l'échelle */
+.admin-scale-in {
+  animation: scaleIn 0.5s var(--admin-transition-bezier) forwards;
+  transform-origin: center;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animation de fondu vers le haut */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-fade-in-up {
+  animation: fadeInUp 0.5s var(--admin-transition-bezier) forwards;
+  opacity: 0;
+}
+
+.admin-delay-1 {
+  animation-delay: 0.1s;
+}
+
+.admin-delay-2 {
+  animation-delay: 0.2s;
+}
+
+.admin-delay-3 {
+  animation-delay: 0.3s;
+}
+
+.admin-delay-4 {
+  animation-delay: 0.4s;
+}
+
+.admin-delay-5 {
+  animation-delay: 0.5s;
+}
+
+/* Amélioration de la barre de défilement personnalisée */
+.admin-custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.admin-custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.dark .admin-custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.admin-custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.dark .admin-custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Amélioration de l'interface utilisateur */
+.admin-user-list-enhanced {
+  animation: fadeInUp 0.6s var(--admin-transition-bezier) forwards;
+  opacity: 0;
+}
+
+/* Survol sur les avatars */
+.admin-user-list-enhanced .avatar {
+  transition: transform 0.3s var(--admin-transition-bezier), box-shadow 0.3s var(--admin-transition-bezier);
+}
+
+.admin-user-list-enhanced .avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dark .admin-user-list-enhanced .avatar:hover {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+} 

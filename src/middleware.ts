@@ -82,8 +82,8 @@ const authMiddleware = withAuth(
  */
 function applyCacheHeaders(request: NextRequest, response: NextResponse): NextResponse {
   // Vérifier que la réponse est bien définie
-  if (!response) {
-    middlewareLogger.warn("applyCacheHeaders: Response non définie");
+  if (!response || !response.headers) {
+    middlewareLogger.warn("applyCacheHeaders: Response non définie ou headers non disponibles");
     return NextResponse.next();
   }
 
@@ -236,7 +236,7 @@ function shouldApplyAuthMiddleware(request: NextRequest): boolean {
  * Configuration des chemins pour lesquels le middleware sera appliqué
  */
 export const config = {
-  // Matcher plus large pour inclure toutes les routes où nous voulons appliquer des métriques
+  // Matcher pour les routes qui nécessitent le middleware
   matcher: [
     // Routes protégées par l'authentification
     "/admin/:path*", 
@@ -244,16 +244,10 @@ export const config = {
     "/dashboard", 
     "/challenges/:path*",
     
-    // Routes API pour les métriques
+    // Routes API pour les métriques et le cache
     "/api/:path*",
-
-    /*
-     * Match all paths except for:
-     * 1. /api routes
-     * 2. /_next static files
-     * 3. /_static static files
-     * 4. /favicon.ico, /sitemap.xml, /robots.txt (static files)
-     */
-    '/((?!api|_next|_static|_vercel|favicon.ico|sitemap.xml|robots.txt).*)',
-  ],
+    
+    // Exclure les routes qui ne nécessitent pas le middleware
+    "/((?!_next/static|_next/image|favicon.ico).*)"
+  ]
 }; 

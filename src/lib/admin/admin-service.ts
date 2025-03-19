@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { AdminStats, AdminLog, UpdateUserDto } from "@/types/admin";
 import { UserRole } from "@prisma/client";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 export class AdminService {
   static async getUsers() {
@@ -272,6 +274,58 @@ export class AdminService {
       console.error('Error updating user:', error);
       throw error;
     }
+  }
+
+  static async updateUserRole(userId: string, role: UserRole) {
+    try {
+      const adminId = await this.getCurrentAdminId();
+      return this.updateUser(userId, adminId, { role });
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      throw error;
+    }
+  }
+
+  static async toggleUserBan(userId: string) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId }
+      });
+
+      if (!user) {
+        throw new Error('Utilisateur non trouvé');
+      }
+
+      const adminId = await this.getCurrentAdminId();
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          isActive: !user.isActive
+        }
+      });
+
+      await prisma.adminLog.create({
+        data: {
+          action: user.isActive ? "BAN" : "UNBAN",
+          details: JSON.stringify({ isActive: !user.isActive }),
+          adminId,
+          targetId: userId
+        }
+      });
+
+      return updatedUser;
+    } catch (error) {
+      console.error('Error toggling user ban status:', error);
+      throw error;
+    }
+  }
+
+  private static async getCurrentAdminId(): Promise<string> {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      throw new Error('Admin non authentifié');
+    }
+    return session.user.id;
   }
 
   // Méthode utilitaire pour vérifier si une colonne existe dans une table

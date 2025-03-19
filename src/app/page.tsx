@@ -42,7 +42,6 @@ export default function Home() {
     </main>
   );
 }
-
 /* Styles pour l'animation des blobs et dégradés */
 const styles = `
 @keyframes blob {
@@ -91,3 +90,4 @@ export const metadata = {
   title: 'LPT Défis - Relevez le défi du jour',
   description: 'Plateforme de défis quotidiens pour développer vos compétences techniques',
 };
+

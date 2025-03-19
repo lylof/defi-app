@@ -1,87 +1,133 @@
 # Patterns Système
 
-## Architecture globale
+## Architecture Globale
 
-### Structure des composants
+L'application suit une architecture moderne basée sur Next.js avec une séparation claire entre les composants serveur et client. Elle utilise le App Router de Next.js 15 pour un routage optimisé et des Server Components pour améliorer les performances.
+
+```mermaid
+flowchart TD
+    Client[Client Browser] --> Next[Next.js App]
+    Next --> SSR[Server-Side Rendering]
+    Next --> CSR[Client-Side Rendering]
+    Next --> API[API Routes]
+    API --> Auth[Authentication Service]
+    API --> Challenge[Challenge Service]
+    API --> User[User Service]
+    API --> DB[(Database)]
+    DB --> Postgres[(PostgreSQL)]
+    DB --> MongoDB[(MongoDB)]
 ```
-Components/
-├── Admin/         # Composants d'administration
-├── UI/           # Composants d'interface réutilisables
-└── Common/       # Composants partagés
-```
 
-## Patterns de conception
+## Patterns de Conception
 
-### 1. Pattern de Cache
-- Utilisation de décorateurs pour la mise en cache
-- Gestion des options de cache par méthode
-- Système de fallback en cas d'erreur
+### Composants UI
 
-### 2. Pattern d'administration
-- Structure modulaire des composants
-- Séparation des responsabilités
-- Réutilisation des composants UI
+L'architecture des composants UI suit un modèle hiérarchique avec des composants atomiques réutilisables qui sont assemblés pour créer des interfaces plus complexes.
 
-### 3. Pattern de gestion d'état
-- Utilisation de React Context pour l'état global
-- État local pour les composants isolés
-- Gestion optimisée des re-rendus
+1. **Pattern de Container/Presentation**
+   - `ChallengeContainer` gère la logique et l'état
+   - Les sous-composants comme `TabsNavigation` sont principalement présentationnels
 
-## Conventions de code
+2. **Pattern de Composition**
+   - Les composants sont conçus pour être composables et modulaires
+   - Exemple: `LeaderboardCard` peut être utilisé indépendamment
 
-### TypeScript
-- Types stricts activés
-- Interfaces pour les props des composants
-- Types utilitaires pour la réutilisation
+### Pattern de State Management
 
-### Composants React
-- Composants fonctionnels
-- Hooks personnalisés pour la logique réutilisable
-- Props typées explicitement
+1. **React Hooks**
+   - Utilisation intensive de `useState` et `useEffect` pour la gestion d'état locale
+   - `useEffect` pour les effets secondaires comme les appels API
 
-### Style
-- TailwindCSS pour le styling
-- Classes utilitaires
-- Composants UI réutilisables
+2. **Pattern de Chargement et d'Erreur**
+   - Utilisation systématique d'états de chargement avec composants skeleton
+   - Gestion des erreurs avec composants dédiés (ex: `ErrorState`)
 
-## Patterns de données
+### Pattern d'Animation
 
-### Cache
+1. **Animation Conditionnelle**
+   - Utilisation de `framer-motion` pour des animations fluides
+   - Animations basées sur l'état (chargement, apparition, survol)
+
 ```typescript
-@Cache({
-  ttl: 3600,
-  key: 'custom-key'
-})
-async function getData() {
-  // ...
-}
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6, delay: 0.4 }}
+  className="mt-16 mb-16"
+>
+  {/* Contenu */}
+</motion.div>
 ```
 
-### API Routes
+## Architecture des Données
+
+### Service Layer
+
+Les services encapsulent la logique métier et les appels API:
+
 ```typescript
-export async function GET() {
-  try {
-    // Logique métier
-    return NextResponse.json({ data })
-  } catch (error) {
-    return NextResponse.json({ error: 'Message' }, { status: 500 })
+// Exemple conceptuel
+export class DailyChallengeService {
+  static async getDailyChallenge(): Promise<DailyChallenge> {
+    // Logique d'appel API
   }
 }
 ```
 
-## Bonnes pratiques
+### Modèles de Données
 
-### Performance
-- Mise en cache appropriée
-- Chargement différé des composants
-- Optimisation des images
+Les structures de données sont définies avec TypeScript pour un typage fort:
 
-### Sécurité
-- Validation des entrées
-- Protection CSRF
-- Gestion sécurisée des sessions
+```typescript
+type Participant = {
+  id: string;
+  name: string;
+  avatar?: string;
+  points: number;
+  rank: number;
+  change?: "up" | "down" | "same";
+};
+```
 
-### Maintenance
-- Code documenté
-- Tests unitaires
-- Revue de code systématique 
+## Patterns de Performance
+
+1. **Lazy Loading**
+   - Chargement progressif des composants non critiques
+
+2. **Optimistic UI**
+   - Mise à jour de l'interface avant la confirmation du serveur pour une meilleure réactivité
+
+3. **Skeleton Loading**
+   - Composants de chargement squelette pour offrir un retour visuel immédiat
+   - Ex: `MainChallengeSkeleton`, `LeaderboardSkeleton`
+
+## Patterns d'Accessibilité
+
+- Utilisation systématique d'attributs ARIA
+- Structure sémantique avec balises appropriées
+- Support du mode sombre avec classes `dark:`
+- Navigation au clavier
+
+## Patterns de Style
+
+L'application utilise le design system shadcn/ui personnalisé avec Tailwind CSS:
+
+```typescript
+<Card className="overflow-hidden h-full border-0 bg-white/80 dark:bg-gray-950/80 shadow-sm backdrop-blur-sm">
+  {/* Contenu */}
+</Card>
+```
+
+## Patterns d'API
+
+- RESTful API avec Next.js API Routes
+- Gestion centralisée des erreurs
+- Validation des données avec TypeScript
+
+## Décisions Techniques Clés
+
+1. **Next.js App Router** pour le SEO et les performances
+2. **Server Components** pour réduire la taille du bundle JavaScript
+3. **Framer Motion** pour des animations fluides et performantes
+4. **shadcn/ui + Tailwind** pour un design système robuste et personnalisable
+5. **Prisma** pour une interaction type-safe avec la base de données 

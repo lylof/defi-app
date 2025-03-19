@@ -1,4 +1,4 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import { fontSans } from "@/lib/fonts/font-sans";
 import { cn } from "@/lib/utils";
 import "./globals.css";
