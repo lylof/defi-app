@@ -1,3 +1,6 @@
+import { ValidationService } from './validation-service';
+import { StorageService } from './storage-service';
+
 /**
  * Types pour la participation anonyme aux défis
  */
@@ -43,8 +46,11 @@ export const AnonymousParticipationService = {
       isSubmitted: false
     };
     
-    // Sauvegarder dans localStorage
-    AnonymousParticipationService._saveParticipation(newParticipation);
+    // Sauvegarder dans le stockage local
+    if (!StorageService.save(STORAGE_KEY, newParticipation)) {
+      console.error('Impossible de sauvegarder la participation');
+      return newParticipation;
+    }
     
     return newParticipation;
   },
@@ -66,6 +72,14 @@ export const AnonymousParticipationService = {
     if (!existingData) {
       return null;
     }
+
+    // Valider les données si présentes
+    if (data) {
+      if (!ValidationService.validateParticipationData(data)) {
+        console.error('Données de participation invalides');
+        return null;
+      }
+    }
     
     const updatedData: AnonymousParticipationData = {
       ...existingData,
@@ -75,8 +89,11 @@ export const AnonymousParticipationService = {
       ...(data?.repositoryUrl && { repositoryUrl: data.repositoryUrl })
     };
     
-    // Sauvegarder dans localStorage
-    AnonymousParticipationService._saveParticipation(updatedData);
+    // Sauvegarder dans le stockage local
+    if (!StorageService.save(STORAGE_KEY, updatedData)) {
+      console.error('Impossible de sauvegarder la mise à jour');
+      return null;
+    }
     
     return updatedData;
   },
@@ -96,6 +113,12 @@ export const AnonymousParticipationService = {
     if (!existingData) {
       return null;
     }
+
+    // Valider les données de soumission
+    if (!ValidationService.validateParticipationData(data)) {
+      console.error('Données de soumission invalides');
+      return null;
+    }
     
     const updatedData: AnonymousParticipationData = {
       ...existingData,
@@ -106,8 +129,11 @@ export const AnonymousParticipationService = {
       isSubmitted: true
     };
     
-    // Sauvegarder dans localStorage
-    AnonymousParticipationService._saveParticipation(updatedData);
+    // Sauvegarder dans le stockage local
+    if (!StorageService.save(STORAGE_KEY, updatedData)) {
+      console.error('Impossible de sauvegarder la soumission');
+      return null;
+    }
     
     return updatedData;
   },
@@ -118,20 +144,20 @@ export const AnonymousParticipationService = {
    * @returns Les données de participation ou null si aucune participation trouvée
    */
   getParticipationData: (challengeId: string): AnonymousParticipationData | null => {
-    // Vérifier si on est côté client
-    if (typeof window === 'undefined') {
+    // Vérifier si le stockage local est disponible
+    if (!StorageService.isAvailable()) {
+      console.error('Stockage local non disponible');
       return null;
     }
     
     try {
-      const storedData = localStorage.getItem(STORAGE_KEY);
+      const storedData = StorageService.get(STORAGE_KEY);
       
       if (!storedData) {
         return null;
       }
       
-      const participations: AnonymousParticipationData[] = JSON.parse(storedData);
-      return participations.find(p => p.challengeId === challengeId) || null;
+      return storedData.find((p: AnonymousParticipationData) => p.challengeId === challengeId) || null;
     } catch (error) {
       console.error('Erreur lors de la récupération des données de participation:', error);
       return null;
@@ -143,52 +169,18 @@ export const AnonymousParticipationService = {
    * @returns Liste des participations anonymes
    */
   getAllParticipations: (): AnonymousParticipationData[] => {
-    // Vérifier si on est côté client
-    if (typeof window === 'undefined') {
+    // Vérifier si le stockage local est disponible
+    if (!StorageService.isAvailable()) {
+      console.error('Stockage local non disponible');
       return [];
     }
     
     try {
-      const storedData = localStorage.getItem(STORAGE_KEY);
-      
-      if (!storedData) {
-        return [];
-      }
-      
-      return JSON.parse(storedData);
+      const storedData = StorageService.get(STORAGE_KEY);
+      return storedData || [];
     } catch (error) {
       console.error('Erreur lors de la récupération des participations:', error);
       return [];
-    }
-  },
-  
-  /**
-   * Sauvegarde une participation dans localStorage
-   * @param participation Données de participation à sauvegarder
-   * @internal
-   */
-  _saveParticipation: (participation: AnonymousParticipationData): void => {
-    // Vérifier si on est côté client
-    if (typeof window === 'undefined') {
-      return;
-    }
-    
-    try {
-      // Récupérer les participations existantes
-      const existingParticipations = AnonymousParticipationService.getAllParticipations();
-      
-      // Filtrer pour retirer l'ancienne version si elle existe
-      const filteredParticipations = existingParticipations.filter(
-        p => p.challengeId !== participation.challengeId
-      );
-      
-      // Ajouter la nouvelle participation
-      const updatedParticipations = [...filteredParticipations, participation];
-      
-      // Enregistrer dans localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedParticipations));
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde de la participation:', error);
     }
   },
   
@@ -198,29 +190,27 @@ export const AnonymousParticipationService = {
    * @returns true si la suppression a réussi, false sinon
    */
   removeParticipation: (challengeId: string): boolean => {
-    // Vérifier si on est côté client
-    if (typeof window === 'undefined') {
+    // Vérifier si le stockage local est disponible
+    if (!StorageService.isAvailable()) {
+      console.error('Stockage local non disponible');
       return false;
     }
     
     try {
-      // Récupérer les participations existantes
-      const existingParticipations = AnonymousParticipationService.getAllParticipations();
+      const storedData = StorageService.get(STORAGE_KEY);
       
-      // Filtrer pour retirer la participation
-      const filteredParticipations = existingParticipations.filter(
-        p => p.challengeId !== challengeId
-      );
-      
-      // Si aucun changement, retourner false
-      if (filteredParticipations.length === existingParticipations.length) {
+      if (!storedData) {
         return false;
       }
       
-      // Enregistrer dans localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredParticipations));
+      const filteredData = storedData.filter((p: AnonymousParticipationData) => p.challengeId !== challengeId);
       
-      return true;
+      // Si aucun changement, retourner false
+      if (filteredData.length === storedData.length) {
+        return false;
+      }
+      
+      return StorageService.save(STORAGE_KEY, filteredData);
     } catch (error) {
       console.error('Erreur lors de la suppression de la participation:', error);
       return false;
@@ -239,10 +229,8 @@ export const AnonymousParticipationService = {
    * Efface toutes les participations anonymes (utile après une connexion)
    */
   clearAllParticipations: (): void => {
-    if (typeof window === 'undefined') {
-      return;
+    if (StorageService.isAvailable()) {
+      StorageService.remove(STORAGE_KEY);
     }
-    
-    localStorage.removeItem(STORAGE_KEY);
   }
 }; 

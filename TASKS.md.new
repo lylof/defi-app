@@ -1,0 +1,32 @@
+﻿# Feuille de Route du Projet LPT DÃ©fis
+
+## Phase 1: Fondations ðŸŸ¢
+
+### SystÃ¨me d'Authentification
+- [x] Authentification de base
+  - [x] Page de connexion
+  - [x] Page d'inscription
+  - [x] Middleware de protection des routes
+  - [x] Sessions JWT (testÃ©es et fonctionnelles)
+- [x] FonctionnalitÃ©s avancÃ©es
+  - [x] RÃ©cupÃ©ration de mot de passe
+  - [x] VÃ©rification d'email
+  - [x] Sessions persistantes (testÃ©es et fonctionnelles)
+  - [x] DÃ©connexion sÃ©curisÃ©e
+
+### Interface Utilisateur
+- [x] Navigation principale
+  - [x] Barre de navigation responsive
+  - [x] Menu latÃ©ral
+  - [x] ThÃ¨me et styles cohÃ©rents
+- [x] Layouts
+  - [x] Layout principal
+  - [x] Layout authentification
+  - [x] Layout dashboard
+- [x] BibliothÃ¨que de composants
+  - [x] Composants de formulaire (Form, Input, Select, Textarea)
+  - [x] Composants de feedback (Toast, Skeleton)
+  - [x] Composants de structure (Card, Badge)
+  - [x] Service de gestion des thÃ¨mes
+  - [x] Hook useTheme
+  - [x] Composant d'exemple de thÃ¨me 

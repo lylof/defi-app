@@ -3,6 +3,7 @@ import "./globals.css";
 import { Metadata } from "next";
 import Providers from "@/components/providers";
 import { initializeServer } from "@/lib/server-init";
+import { NotificationContainer } from "@/components/ui/notification-container";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,7 +27,10 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <head />
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <NotificationContainer />
+          {children}
+        </Providers>
       </body>
     </html>
   );
