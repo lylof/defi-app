@@ -4,6 +4,7 @@ import { Badge } from "@prisma/client";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 
 interface BadgeNotificationProps {
   badge: Badge;
@@ -45,11 +46,12 @@ export function BadgeNotification({ badge, onClose }: BadgeNotificationProps) {
               {badge.name}
             </p>
           </div>
-          <button
+          <button aria-label="Fermer"
             onClick={() => setIsVisible(false)}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+            aria-label="Fermer la notification"
           >
-            ×
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </motion.div>
       )}

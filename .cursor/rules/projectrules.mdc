@@ -1,93 +1,212 @@
 ---
-description: A set of best practices for Next.js, TypeScript, and Tailwind CSS aimed at improving performance, maintainability, and code quality.
+description: 
 globs: 
 alwaysApply: true
 ---
+## Tech Stack Overview
+- Frontend: Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, React
+- Backend: API Routes Next.js (Serverless), TypeScript, Node.js 
+- Database: PostgreSQL (Neon), MongoDB
+- ORM: Prisma, Mongoose
+- Authentication: NextAuth.js
+- Testing: Jest, React Testing Library
+- Deployment: Vercel (Frontend), Render (Backend)
 
-# Your rule content
+## MCP Tools Integration
 
-Before diving into the best practices, please note that you may need to adapt the globs depending on your project's structure.
+### Browser Tools MCP
+Use these tools frequently for debugging and optimization:
+- `getConsoleLogs`, `getConsoleErrors` - For JavaScript debugging
+- `getNetworkErrors`, `getNetworkLogs` - For API and data fetching analysis
+- `takeScreenshot` - For UI verification and documentation
+- `getSelectedElement` - For DOM inspection
+- `wipeLogs` - For clearing console output
+- `runAccessibilityAudit` - For checking A11Y compliance
+- `runPerformanceAudit` - For optimizing Core Web Vitals
+- `runSEOAudit` - For SEO optimization
+- `runNextJSAudit` - For Next.js best practices verification
+- `runDebuggerMode` - For advanced debugging
+- `runAuditMode` - For general code quality assessment
+- `runBestPracticesAudit` - For ensuring codebase follows best practices
 
----
+### Magic MCP
+Leverage these tools for component creation:
+- `21st_magic_component_builder` - For generating optimized components
+- `logo_search` - For finding and implementing logos
+- `21st_magic_component_inspiration` - For design inspiration
+
+### MCP Usage Guidelines
+- Prefer using MCP tools over writing manual debugging code
+- Implement MCP audits during development for continuous quality assurance
+- Use component builders when creating new UI elements to ensure consistency
+- Incorporate MCP tools in your development workflow, especially for performance and accessibility checks
+- When facing UI/UX challenges, leverage the magic component inspiration tool first
+
+## Code Style and Structure
+
+- Write concise, technical JavaScript code with accurate examples
+- Use functional and declarative programming patterns; avoid classes
+- Prefer iteration and modularization over code duplication
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError)
+- Structure files: exported component, subcomponents, helpers, static content
+- Integrate MCP audits in your testing pipeline
+
+## Naming Conventions
+
+- Use kebab-case for directories
+- Use camelCase for variables and functions
+- Use PascalCase for components
+- File names for components should be in PascalCase. Rest of the files in kebab-case
+- Prefix component names with their type (e.g. ButtonAccount.jsx and ButtonSignin.jsx, CardAnalyticsMain.jsx and CardAnalyticsData.jsx, etc.)
+- When referencing MCP tools in comments, use the exact tool name
+
+## Syntax and Formatting
+
+- Use the "function" keyword for pure functions
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements
+- Use declarative JSX
+- Follow TypeScript strict mode guidelines
+- Use MCP audits to verify code formatting compliance
+
+## UI and Styling
+
+- Use shadcn/ui and Tailwind CSS for components and styling
+- Implement responsive design with Tailwind CSS; use a mobile-first approach
+- Leverage `21st_magic_component_builder` for complex UI components
+- Use `runAccessibilityAudit` to ensure all UI elements are accessible
+
+## Performance Optimization
+
+- Minimize 'use client', 'useState', and 'useEffect'; favor React Server Components (RSC)
+- Wrap client components in Suspense with fallback
+- Use dynamic loading for non-critical components
+- Optimize images: use WebP format, include size data, implement lazy loading
+- Regularly run `runPerformanceAudit` to identify and fix performance bottlenecks
+- Use `getNetworkLogs` to analyze and optimize API calls
+
+## Database and Backend
+
+- Use Prisma Client for PostgreSQL and Mongoose for MongoDB interactions
+- Implement proper error handling for all database operations
+- Leverage Prisma Migrate for version-controlled schema changes
+- Use Next.js API routes with appropriate error handling
+- Monitor backend performance with MCP network tools
+
+## Key Conventions
+
+- Optimize Web Vitals (LCP, CLS, FID) with help from `runPerformanceAudit`
+- Limit 'use client':
+  - Favor server components and Next.js SSR
+  - Use only for Web API access in small components
+  - Avoid for data fetching or state management
+  - If absolutely necessary, you can use 'swr' library for client-side data fetching
+- When using client-side hooks (useState and useEffect) in a component that's being treated as a Server Component by Next.js, always add the "use client" directive at the top of the file
+- Follow Next.js docs for Data Fetching, Rendering, and Routing
+- Regularly use `runNextJSAudit` to validate Next.js best practices
+
+## Design Philosophy
+
+- Create beautiful, production-worthy designs, not cookie-cutter templates
+- Make webpages that are fully featured
+- Do not install other packages for UI themes, icons, etc. unless absolutely necessary or specifically requested
+- Use `21st_magic_component_inspiration` when designing new features
+
+## Best Practices Rules
+
+### Next.js Best Practices
+```
 name: nextjs-best-practices.mdc
 description: Best practices for Next.js applications and routing
 globs: **/*.{ts,tsx}
----
+```
 
-- Utilize Next.js 15's App Router for improved performance and easier routing.
-- Leverage Server Components for better data fetching and reduced client-side JavaScript.
-- Implement proper error handling with error boundaries and the `error.js` file.
-- Use Next.js API routes for serverless backend functionality.
-- Optimize images with the `next/image` component for better performance.
+- Utilize Next.js 15's App Router for improved performance and easier routing
+- Leverage Server Components for better data fetching and reduced client-side JavaScript
+- Implement proper error handling with error boundaries and the `error.js` file
+- Use Next.js API routes for serverless backend functionality
+- Optimize images with the `next/image` component for better performance
+- Run `runNextJSAudit` regularly to ensure compliance with Next.js best practices
 
----
+### TypeScript Best Practices
+```
 name: typescript-best-practices.mdc
 description: TypeScript coding standards and type safety guidelines
 globs: **/*.{ts,tsx}
----
+```
 
-- Enable strict mode in your `tsconfig.json` for enhanced type checking.
-- Use type inference where possible to reduce redundancy.
-- Employ generics for reusable components and functions.
-- Utilize union types and type guards for better type safety.
-- Implement custom types for complex data structures used in your application.
+- Enable strict mode in your `tsconfig.json` for enhanced type checking
+- Use type inference where possible to reduce redundancy
+- Employ generics for reusable components and functions
+- Utilize union types and type guards for better type safety
+- Implement custom types for complex data structures used in your application
+- Use console error tools from MCP to catch TypeScript-related issues early
 
----
+### Tailwind CSS Best Practices
+```
 name: tailwindcss-best-practices.mdc
 description: Best practices for using Tailwind CSS in your project
 globs: **/*.{ts,tsx,css}
----
+```
 
-- Use utility-first classes for rapid development and consistent styling.
-- Create custom components with `@apply` directive for reusable styles.
-- Implement responsive design using Tailwind's responsive utility classes.
-- Optimize your CSS by using the `purge` option to remove unused styles.
-- Leverage Tailwind's dark mode support for better user experience.
+- Use utility-first classes for rapid development and consistent styling
+- Create custom components with `@apply` directive for reusable styles
+- Implement responsive design using Tailwind's responsive utility classes
+- Optimize your CSS by using the `purge` option to remove unused styles
+- Leverage Tailwind's dark mode support for better user experience
+- Use `takeScreenshot` and `getSelectedElement` to verify responsive designs
 
----
+### Shadcn UI Best Practices
+```
 name: shadcn-ui-best-practices.mdc
 description: Guidelines for using Shadcn UI components
 globs: **/*.{ts,tsx}
----
+```
 
-- Follow Shadcn UI's component structure for consistency across your application.
-- Customize components using the provided props and utility classes.
-- Ensure accessibility by using Shadcn UI's built-in accessibility features.
-- Extend components with custom styles while maintaining the original functionality.
-- Use Shadcn UI's theming capabilities to match your project's design system.
+- Follow Shadcn UI's component structure for consistency across your application
+- Customize components using the provided props and utility classes
+- Ensure accessibility by using Shadcn UI's built-in accessibility features
+- Extend components with custom styles while maintaining the original functionality
+- Use Shadcn UI's theming capabilities to match your project's design system
+- Leverage `21st_magic_component_builder` when extending shadcn/ui components
 
----
+### Prisma Best Practices
+```
 name: prisma-best-practices.mdc
 description: Best practices for using Prisma ORM with PostgreSQL
 globs: **/*.{ts,tsx}
----
+```
 
-- Use Prisma Client for type-safe database queries and improved developer experience.
-- Implement proper error handling for database operations.
-- Utilize Prisma Migrate for version-controlled database schema changes.
-- Optimize queries with Prisma's query API and relation loading.
-- Leverage Prisma's transaction support for complex database operations.
+- Use Prisma Client for type-safe database queries and improved developer experience
+- Implement proper error handling for database operations
+- Utilize Prisma Migrate for version-controlled database schema changes
+- Optimize queries with Prisma's query API and relation loading
+- Leverage Prisma's transaction support for complex database operations
+- Use `getNetworkLogs` to monitor database query performance
 
----
+### NextAuth Best Practices
+```
 name: nextauth-best-practices.mdc
 description: Best practices for implementing authentication with NextAuth.js
 globs: **/*.{ts,tsx}
----
+```
 
-- Use NextAuth.js for seamless authentication and session management.
-- Implement multiple authentication providers for user flexibility.
-- Secure your API routes with NextAuth.js's built-in middleware.
-- Customize the authentication flow to match your application's needs.
-- Implement proper error handling and user feedback for authentication processes.
+- Use NextAuth.js for seamless authentication and session management
+- Implement multiple authentication providers for user flexibility
+- Secure your API routes with NextAuth.js's built-in middleware
+- Customize the authentication flow to match your application's needs
+- Implement proper error handling and user feedback for authentication processes
+- Use MCP network tools to debug authentication flow issues
 
----
+### Jest Best Practices
+```
 name: jest-best-practices.mdc
 description: Best practices for testing with Jest in Next.js applications
 globs: **/*.{ts,tsx,js,jsx}
----
+```
 
-- Write unit tests for individual components and functions.
-- Use Jest's mocking capabilities to isolate dependencies during testing.
-- Implement integration tests to ensure proper component interactions.
-- Utilize code coverage reports to identify untested areas of your codebase.
-- Set up a CI/CD pipeline to run tests automatically on code changes.
+- Write unit tests for individual components and functions
+- Use Jest's mocking capabilities to isolate dependencies during testing
+- Implement integration tests to ensure proper component interactions
+- Utilize code coverage reports to identify untested areas of your codebase
+- Set up a CI/CD pipeline to run tests automatically on code changes
+- Incorporate MCP audit tools in your testing suite for comprehensive quality assurance

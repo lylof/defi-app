@@ -153,19 +153,38 @@ class PrismaClientWithReconnect extends PrismaClient {
   private async checkConnection(): Promise<boolean> {
     try {
       // Exécuter une requête simple pour vérifier la connexion
-      await this.$queryRaw`SELECT 1 as health_check`;
+      const result = await this.$queryRaw`SELECT 1 as health_check`;
       
-      // Si on arrive ici, la connexion est fonctionnelle
-      this.connectionHealthy = true;
-      dbLogger.info("Connexion à la base de données vérifiée avec succès");
-      
-      return true;
+      // Vérifier que la réponse est correcte
+      if (Array.isArray(result) && result.length > 0 && result[0].health_check === 1) {
+        // Si on arrive ici, la connexion est fonctionnelle
+        this.connectionHealthy = true;
+        
+        // Ne pas logger à chaque vérification réussie pour éviter trop de logs
+        if (this.connectionErrors > 0) {
+          dbLogger.info("Connexion à la base de données rétablie après erreurs");
+          this.connectionErrors = 0;
+        }
+        
+        return true;
+      } else {
+        throw new Error("Résultat de vérification de santé invalide");
+      }
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       dbLogger.error("Échec de la vérification de santé de la connexion", err);
       
       this.connectionHealthy = false;
       this.connectionErrors++;
+      
+      // Si plusieurs erreurs consécutives, tenter une reconnexion
+      if (this.connectionErrors >= 3 && !this.isConnecting) {
+        dbLogger.warn(`${this.connectionErrors} erreurs consécutives détectées, tentative de reconnexion automatique`);
+        this.handleReconnect().catch(e => {
+          dbLogger.error("Erreur lors de la tentative de reconnexion suite à échec de vérification", 
+            e instanceof Error ? e : new Error(String(e)));
+        });
+      }
       
       return false;
     }
@@ -191,6 +210,8 @@ class PrismaClientWithReconnect extends PrismaClient {
       // Déconnecter d'abord avant de reconnecter
       try {
         await this.$disconnect();
+        // Attendre un court délai après la déconnexion pour éviter les conflits
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (disconnectError) {
         // Ignorer les erreurs de déconnexion, continuer avec la reconnexion
         dbLogger.debug("Erreur lors de la déconnexion (ignorée): " + 
@@ -202,8 +223,14 @@ class PrismaClientWithReconnect extends PrismaClient {
       dbLogger.info(`Attente de ${Math.round(delay / 1000)} secondes avant la prochaine tentative...`);
       await new Promise(resolve => setTimeout(resolve, delay));
       
-      // Tenter la reconnexion
-      await this.$connect();
+      // Utiliser un timeout pour éviter des tentatives de connexion qui traînent
+      const connectionPromise = this.$connect();
+      const timeoutPromise = new Promise<void>((_, reject) => {
+        setTimeout(() => reject(new Error("Délai de connexion dépassé")), DB_CONFIG.reconnectTimeoutMs);
+      });
+
+      // Attendre la connexion ou le timeout, selon ce qui arrive en premier
+      await Promise.race([connectionPromise, timeoutPromise]);
       
       // Réinitialiser les compteurs après une reconnexion réussie
       this.isConnecting = false;
@@ -216,6 +243,9 @@ class PrismaClientWithReconnect extends PrismaClient {
       this.connectionEmitter.emit('connected');
       
       dbLogger.info("Reconnexion à la base de données réussie.");
+      
+      // Vérifier immédiatement la connexion pour confirmer qu'elle fonctionne
+      setTimeout(() => this.checkConnection(), 1000);
     } catch (reconnectError) {
       const error = reconnectError instanceof Error ? reconnectError : new Error(String(reconnectError));
       dbLogger.error("Échec de la tentative de reconnexion", error);
@@ -224,16 +254,26 @@ class PrismaClientWithReconnect extends PrismaClient {
       
       // Vérifier si nous avons atteint le nombre maximum de tentatives
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        dbLogger.error(`Nombre maximum de tentatives de reconnexion atteint (${this.maxReconnectAttempts}). Abandon.`);
-        this.reconnectAttempts = 0; // réinitialiser pour les tentatives futures
+        dbLogger.error(`Nombre maximum de tentatives de reconnexion atteint (${this.maxReconnectAttempts}). Pause temporaire.`);
+        // Réinitialiser après une pause plus longue pour permettre au serveur de récupérer
+        setTimeout(() => {
+          dbLogger.info("Reprise des tentatives de reconnexion après pause");
+          this.reconnectAttempts = 0;
+          this.handleReconnect().catch(e => {
+            dbLogger.error("Erreur dans la reprise de tentative de reconnexion", 
+              e instanceof Error ? e : new Error(String(e)));
+          });
+        }, 60000); // Pause d'une minute
         return;
       }
       
       // Tenter à nouveau si nous n'avons pas atteint le maximum
-      this.handleReconnect().catch(e => {
-        dbLogger.error("Erreur dans la tentative de reconnexion récursive", 
-          e instanceof Error ? e : new Error(String(e)));
-      });
+      setTimeout(() => {
+        this.handleReconnect().catch(e => {
+          dbLogger.error("Erreur dans la tentative de reconnexion après délai", 
+            e instanceof Error ? e : new Error(String(e)));
+        });
+      }, Math.min(1000 * this.reconnectAttempts, 15000)); // Délai progressif, max 15 secondes
     }
   }
 
@@ -295,31 +335,45 @@ class PrismaClientWithReconnect extends PrismaClient {
   }
 
   /**
-   * Vérifie périodiquement l'état de la connexion et tente de se reconnecter si nécessaire
+   * Démarre la vérification périodique de la santé de la connexion
    */
   private startConnectionHealthCheck() {
-    // Nettoyer tout timer existant pour éviter les fuites mémoire
+    // Nettoyer tout timer existant
     if (this.connectionCheckTimer) {
       clearInterval(this.connectionCheckTimer);
     }
     
-    // Vérifier la connexion périodiquement
+    // Créer un nouveau timer pour la vérification périodique
     this.connectionCheckTimer = setInterval(async () => {
       try {
-        // Vérifier si la dernière requête est trop ancienne (connexion peut-être inactive)
+        dbLogger.info("Vérification de la santé de la connexion à la base de données");
+        
+        // Calculer le temps depuis la dernière requête
         const timeSinceLastQuery = Date.now() - this.lastQueryTime;
         
-        if (timeSinceLastQuery > this.connectionCheckInterval * 2) {
-          dbLogger.info("Vérification de la santé de la connexion à la base de données");
+        // Si aucune activité récente ou si des erreurs ont été détectées, vérifier la connexion
+        if (timeSinceLastQuery > DB_CONFIG.pingInterval || this.connectionErrors > 0) {
           await this.checkConnection();
+        } else {
+          dbLogger.debug(`Vérification de connexion ignorée, dernière requête il y a ${Math.round(timeSinceLastQuery/1000)}s`);
+        }
+        
+        // Vérifier l'âge de la connexion pour la recycler si nécessaire
+        const connectionAge = Date.now() - this.connectionCreationTime;
+        if (connectionAge > DB_CONFIG.maxConnectionAge && this.connectionHealthy && !this.isConnecting) {
+          dbLogger.info(`La connexion a atteint l'âge maximum (${Math.round(connectionAge/60000)} minutes), recyclage en cours...`);
+          await this.reconnect().catch(e => {
+            dbLogger.error("Erreur lors du recyclage de la connexion", 
+              e instanceof Error ? e : new Error(String(e)));
+          });
         }
       } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
         dbLogger.error("Erreur lors de la vérification de santé de la connexion", err);
       }
-    }, this.connectionCheckInterval);
+    }, DB_CONFIG.healthCheckInterval);
     
-    // S'assurer que le timer ne bloque pas la fermeture du processus Node
+    // S'assurer que le timer ne bloque pas la fin du programme
     if (this.connectionCheckTimer.unref) {
       this.connectionCheckTimer.unref();
     }

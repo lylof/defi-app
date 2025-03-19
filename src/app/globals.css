@@ -2,23 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 
+  Variables globales pour l'application LPT Défis
+  Palette de couleurs de l'identité visuelle
+*/
 :root {
+  /* Couleurs de base */
+  --primary: #0ACF83; /* Vert - couleur principale */
+  --primary-light: #4feaa9; /* Version plus claire de la couleur principale */
+  --secondary: #A259FF; /* Violet */
+  --accent-blue: #1ABCFE; /* Bleu */
+  --accent-red: #FE5F5F; /* Rouge */
+  --accent-yellow: #FFC000; /* Jaune/Or */
+  --dark: #111111; /* Noir/Gris foncé */
+  
+  /* Variables de thème - mode clair */
   --background: #ffffff;
   --foreground: #171717;
+  --card-background: #ffffff;
+  --card-foreground: #171717;
+  --popover-background: #ffffff;
+  --popover-foreground: #171717;
+  --primary-foreground: #ffffff;
+  --secondary-foreground: #ffffff;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: #f9fafb;
+  --accent-foreground: #111827;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #0ACF83;
+  
+  /* Couleurs d'état */
+  --success: #0ACF83;
+  --warning: #FFC000;
+  --destructive: #FE5F5F;
+  --destructive-foreground: #ffffff;
+  
+  /* Variables additionnelles */
+  --radius: 0.5rem;
 }
 
 [data-theme="dark"] {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  /* Variables de thème - mode sombre */
+  --background: #111111;
+  --foreground: #f9fafb;
+  --card-background: #1e1e1e;
+  --card-foreground: #f9fafb;
+  --popover-background: #1e1e1e;
+  --popover-foreground: #f9fafb;
+  --primary: #0ACF83;
+  --primary-light: #4feaa9;
+  --primary-foreground: #111111;
+  --secondary: #A259FF;
+  --secondary-foreground: #111111;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f9fafb;
+  --border: #2e2e2e;
+  --input: #2e2e2e;
+  --ring: #0ACF83;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   /* Éviter le flash pendant l'hydratation */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Classes utilitaires pour les couleurs d'identité visuelle */
+.text-primary { color: var(--primary); }
+.text-secondary { color: var(--secondary); }
+.text-accent-blue { color: var(--accent-blue); }
+.text-accent-red { color: var(--accent-red); }
+.text-accent-yellow { color: var(--accent-yellow); }
+
+.bg-primary { background-color: var(--primary); }
+.bg-secondary { background-color: var(--secondary); }
+.bg-accent-blue { background-color: var(--accent-blue); }
+.bg-accent-red { background-color: var(--accent-red); }
+.bg-accent-yellow { background-color: var(--accent-yellow); }
+
+/* Ajout de transitions pour tous les éléments interactifs */
+a, button, input, select, textarea, [role="button"] {
+  transition: all 0.2s ease;
 }
 
 /* Éviter les flashs pendant l'hydratation */
@@ -29,4 +101,69 @@ body {
 
 .fouc-ready {
   opacity: 1;
+}
+
+/* Animations inspirées du design Apple */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-blob {
+  animation: blob 20s infinite alternate;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+.animate-gradient {
+  background-size: 200% auto;
+  animation: gradient 8s ease infinite;
+}
+
+/* Effet de cartes surélevées inspiré d'Apple */
+.apple-card {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 14px;
+  box-shadow: 0px 4px 24px -1px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.apple-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0px 8px 30px -2px rgba(0, 0, 0, 0.08);
+}
+
+.dark .apple-card {
+  background: rgba(30, 30, 30, 0.8);
+  box-shadow: 0px 4px 24px -1px rgba(0, 0, 0, 0.1);
 }

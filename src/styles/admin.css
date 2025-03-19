@@ -1,0 +1,384 @@
+/* Styles pour l'interface administrateur - Inspiration Apple */
+
+/* Variables de couleur */
+:root {
+  --admin-primary: #0071e3;
+  --admin-primary-hover: #0062c4;
+  --admin-secondary: #6e6e73;
+  --admin-background: #f5f5f7;
+  --admin-card-bg: #ffffff;
+  --admin-border: #d2d2d7;
+  --admin-text: #1d1d1f;
+  --admin-text-secondary: #6e6e73;
+  --admin-success: #28cd41;
+  --admin-warning: #ff9f0a;
+  --admin-error: #ff3b30;
+  --admin-shadow: rgba(0, 0, 0, 0.05);
+  --admin-glass-bg: rgba(255, 255, 255, 0.8);
+  --admin-card-hover-shadow: rgba(0, 0, 0, 0.1);
+  --admin-gradient-primary: linear-gradient(135deg, #0071e3, #42a5f5);
+  --admin-focus-ring: rgba(0, 113, 227, 0.2);
+}
+
+/* Reset et base */
+.admin-interface {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--admin-background);
+  color: var(--admin-text);
+  letter-spacing: -0.01em;
+}
+
+/* Typographie */
+.admin-interface h1 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+  background: var(--admin-gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.admin-interface h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 1rem;
+}
+
+.admin-interface p {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--admin-text-secondary);
+}
+
+/* Navigation */
+.admin-nav {
+  background-color: var(--admin-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 1px 20px var(--admin-shadow);
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 0.75rem;
+  margin-right: 0;
+  transition: box-shadow 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.admin-nav-item {
+  padding: 1rem 1.5rem;
+  transition: all 0.2s ease;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+}
+
+.admin-nav-item:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+  transform: translateX(3px);
+}
+
+.admin-nav-item.active {
+  background-color: rgba(0, 113, 227, 0.1);
+  border-left: 3px solid var(--admin-primary);
+  font-weight: 500;
+}
+
+/* Cartes et conteneurs */
+.admin-card {
+  background-color: var(--admin-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px var(--admin-shadow);
+  padding: 1.75rem;
+  margin-bottom: 1.75rem;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.admin-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px var(--admin-card-hover-shadow);
+}
+
+/* Tableaux */
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px var(--admin-shadow);
+}
+
+.admin-table thead {
+  background-color: var(--admin-background);
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 1.25rem 1.5rem;
+  font-weight: 600;
+  color: var(--admin-text-secondary);
+  border-bottom: 1px solid var(--admin-border);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+.admin-table td {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--admin-border);
+  transition: background-color 0.2s ease;
+}
+
+.admin-table tr:hover td {
+  background-color: rgba(0, 113, 227, 0.02);
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Formulaires */
+.admin-form-control {
+  margin-bottom: 1.75rem;
+}
+
+.admin-form-label {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-weight: 500;
+  color: var(--admin-text);
+  font-size: 0.95rem;
+}
+
+.admin-input,
+.admin-textarea,
+.admin-select {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  border-radius: 10px;
+  border: 1px solid var(--admin-border);
+  background-color: rgba(255, 255, 255, 0.8);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px var(--admin-shadow);
+}
+
+.admin-input:hover,
+.admin-textarea:hover,
+.admin-select:hover {
+  border-color: var(--admin-primary-hover);
+}
+
+.admin-input:focus,
+.admin-textarea:focus,
+.admin-select:focus {
+  outline: none;
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 4px var(--admin-focus-ring);
+  background-color: white;
+}
+
+/* Boutons */
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.75rem;
+  border-radius: 10px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  gap: 0.6rem;
+  letter-spacing: -0.01em;
+  border: none;
+  box-shadow: 0 1px 2px var(--admin-shadow);
+}
+
+.admin-btn-primary {
+  background: var(--admin-gradient-primary);
+  color: white;
+}
+
+.admin-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.25);
+}
+
+.admin-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 113, 227, 0.25);
+}
+
+.admin-btn-secondary {
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--admin-border);
+  color: var(--admin-text);
+}
+
+.admin-btn-secondary:hover {
+  background-color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--admin-shadow);
+}
+
+.admin-btn-secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px var(--admin-shadow);
+}
+
+.admin-btn-danger {
+  background-color: var(--admin-error);
+  color: white;
+}
+
+.admin-btn-danger:hover {
+  background-color: #e03129;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.25);
+}
+
+/* Badges et statuts */
+.admin-badge {
+  display: inline-flex;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.admin-badge-success {
+  background-color: rgba(40, 205, 65, 0.1);
+  color: var(--admin-success);
+  border: 1px solid rgba(40, 205, 65, 0.2);
+}
+
+.admin-badge-warning {
+  background-color: rgba(255, 159, 10, 0.1);
+  color: var(--admin-warning);
+  border: 1px solid rgba(255, 159, 10, 0.2);
+}
+
+.admin-badge-error {
+  background-color: rgba(255, 59, 48, 0.1);
+  color: var(--admin-error);
+  border: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+/* Animations et transitions */
+.admin-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header */
+.admin-header {
+  background-color: var(--admin-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  margin: 0.75rem;
+  margin-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  height: 70px;
+}
+
+/* Main content */
+.admin-main {
+  background-color: var(--admin-background);
+  margin: 0 0.75rem 0.75rem 0.75rem;
+  border-radius: 0 0 16px 16px;
+  padding: 2rem !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-interface h1 {
+    font-size: 2rem;
+  }
+  
+  .admin-interface h2 {
+    font-size: 1.5rem;
+  }
+  
+  .admin-card {
+    padding: 1.25rem;
+  }
+  
+  .admin-header, 
+  .admin-main {
+    margin: 0;
+    border-radius: 0;
+  }
+}
+
+/* Stats cards */
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.admin-stats-card {
+  padding: 1.5rem;
+  border-radius: 16px;
+  background-color: var(--admin-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.admin-stats-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px var(--admin-card-hover-shadow);
+}
+
+.admin-stats-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: var(--admin-gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.admin-stats-label {
+  font-size: 0.95rem;
+  color: var(--admin-text-secondary);
+  font-weight: 500;
+}
+
+/* Profile section */
+.admin-profile-section {
+  background-color: var(--admin-glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 1rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.admin-profile-avatar {
+  box-shadow: 0 4px 12px var(--admin-shadow);
+  border: 2px solid white;
+}

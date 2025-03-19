@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LPT Défis
 
-## Getting Started
+Plateforme de défis quotidiens de développement pour la communauté LPT, permettant aux développeurs de tous niveaux de s'améliorer à travers des challenges variés et collaboratifs.
 
-First, run the development server:
+## 📋 Fonctionnalités
+
+- 🏆 Défis quotidiens avec objectifs clairs et progressifs
+- 📊 Tableau de classement et système de points
+- 👥 Profils utilisateurs et suivi de progression
+- 🌐 Interface responsive et moderne
+- 🔐 Système d'authentification sécurisé
+
+## 🚀 Démarrage rapide
+
+### Prérequis
+
+- Node.js 18+ et npm
+- Base de données PostgreSQL
+- Variables d'environnement configurées (voir `.env.example`)
+
+### Installation
 
 ```bash
+# Cloner le dépôt
+git clone https://github.com/votre-organisation/lpt-defis.git
+cd lpt-defis
+
+# Installer les dépendances
+npm install
+
+# Configurer l'environnement
+cp .env.example .env
+# Modifier les variables dans .env selon votre configuration
+
+# Initialiser la base de données
+npx prisma migrate dev
+
+# Lancer l'application en développement
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+L'application sera disponible à l'adresse [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🧪 Tests
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Exécuter tous les tests
+npm test
 
-## Learn More
+# Tests unitaires
+npm run test:unit
 
-To learn more about Next.js, take a look at the following resources:
+# Tests d'intégration
+npm run test:integration
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Tests end-to-end
+npm run test:e2e
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ♿ Accessibilité
 
-## Deploy on Vercel
+L'application LPT Défis est conçue pour être accessible à tous les utilisateurs, y compris ceux utilisant des technologies d'assistance.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Fonctionnalités d'accessibilité
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Navigation au clavier complète
+- Support des lecteurs d'écran
+- Composants UI accessibles avec attributs ARIA appropriés
+- Contrastes optimisés
+
+### Outils d'analyse d'accessibilité
+
+Le projet intègre des outils d'analyse et de correction automatique des problèmes d'accessibilité :
+
+```bash
+# Analyser le code pour trouver des problèmes d'accessibilité
+npm run a11y
+
+# Analyser avec suggestions de correction détaillées
+npm run a11y:fix
+
+# Appliquer des corrections automatiques pour les problèmes courants
+node scripts/fix-accessibility.js
+```
+
+### Documentation
+
+Pour plus d'informations sur l'implémentation de l'accessibilité, consultez :
+
+- [Guide d'implémentation](docs/GUIDE_ACCESSIBILITE.md)
+- [Récapitulatif des améliorations](docs/ACCESSIBILITE_RECAP.md)
+
+## 🛠️ Stack technique
+
+- **Frontend** : Next.js, React, TypeScript, Tailwind CSS
+- **Backend** : Next.js API Routes, Prisma ORM
+- **Base de données** : PostgreSQL
+- **Authentification** : NextAuth.js
+- **Tests** : Jest, React Testing Library, Playwright
+- **CI/CD** : GitHub Actions
+
+## 📚 Documentation
+
+- [Guide du développeur](docs/DEVELOPER.md)
+- [Architecture du projet](docs/ARCHITECTURE.md)
+- [Guide de contribution](CONTRIBUTING.md)
+- [Optimisations](OPTIMISATIONS.md)
+- [Accessibilité](ACCESSIBILITE.md)
+
+## 📝 Licence
+
+Ce projet est sous licence [MIT](LICENSE).

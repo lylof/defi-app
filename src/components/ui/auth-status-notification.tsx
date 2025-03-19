@@ -84,7 +84,7 @@ export function AuthStatusNotification() {
                 {errorType === "invalid" && "Session invalide"}
                 {errorType === "disconnected" && "Non connecté"}
               </h3>
-              <button
+              <button aria-label="Fermer"
                 type="button"
                 className="inline-flex text-red-500 hover:text-red-700"
                 onClick={() => setShowNotification(false)}

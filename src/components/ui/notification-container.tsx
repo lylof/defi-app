@@ -3,6 +3,11 @@
 import { useEffect, useState } from 'react';
 import { NotificationService, NotificationDetails } from '@/lib/services/notification-service';
 import { cn } from '@/lib/utils';
+import React from "react";
+import { Notification } from "@/lib/services/notification-service";
+import { X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { AccessibleIcon } from "@/lib/utils/accessibility";
 
 /**
  * Composant pour afficher les notifications
@@ -28,31 +33,34 @@ export function NotificationContainer() {
   if (notifications.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-4">
-      {notifications.map((notification) => (
-        <div
-          key={notification.id}
-          className={cn(
-            'rounded-lg p-4 shadow-lg transition-all duration-300',
-            {
-              'bg-green-500 text-white': notification.type === 'success',
-              'bg-red-500 text-white': notification.type === 'error',
-              'bg-yellow-500 text-white': notification.type === 'warning',
-              'bg-blue-500 text-white': notification.type === 'info',
-            }
-          )}
-        >
-          <div className="flex items-center space-x-2">
-            <span className="font-medium">{notification.message}</span>
-            <button
+    <div className="fixed bottom-0 right-0 p-4 space-y-2 z-50">
+      <AnimatePresence>
+        {notifications.map((notification) => (
+          <motion.div
+            key={notification.id}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 flex items-start max-w-sm"
+          >
+            <div className="flex-1">
+              <h3 className="font-semibold text-sm">{notification.title}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {notification.message}
+              </p>
+            </div>
+            <button aria-label="Fermer"
               onClick={() => NotificationService.remove(notification.id)}
-              className="ml-2 text-white hover:text-gray-200"
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              aria-label="Fermer la notification"
             >
-              ×
+              <AccessibleIcon>
+                <X className="h-5 w-5" />
+              </AccessibleIcon>
             </button>
-          </div>
-        </div>
-      ))}
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </div>
   );
 } 

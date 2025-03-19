@@ -1,3 +1,5 @@
+"use client";
+
 import NextImage, { ImageProps as NextImageProps } from 'next/image';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -27,7 +29,7 @@ export interface OptimizedImageProps extends Omit<NextImageProps, 'onError'> {
  *   alt="Photo de profil" 
  *   width={200} 
  *   height={200} 
- *   fallbackSrc="/images/default-avatar.png"
+ *   fallbackSrc="/images/default-avatar.svg"
  * />
  */
 export function OptimizedImage({
@@ -36,7 +38,7 @@ export function OptimizedImage({
   width,
   height,
   containerClassName,
-  fallbackSrc = '/images/placeholder.png',
+  fallbackSrc = '/images/placeholder.svg',
   className,
   onError,
   ...props
@@ -97,8 +99,45 @@ export function Avatar({
       height={40}
       className={cn('rounded-full object-cover', className)}
       containerClassName={cn('rounded-full', containerClassName)}
-      fallbackSrc="/images/default-avatar.png"
+      fallbackSrc="/images/default-avatar.svg"
       {...props}
+    />
+  );
+}
+
+/**
+ * Props pour le composant Image
+ */
+interface ImageProps extends NextImageProps {
+  fallbackSrc?: string;
+}
+
+/**
+ * Composant Image personnalisé avec gestion d'erreur
+ * Affiche une image de fallback en cas de chargement échoué
+ */
+export function Image({ 
+  alt, 
+  src, 
+  fallbackSrc = "/images/image-placeholder.svg", 
+  ...props 
+}: ImageProps) {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [isError, setIsError] = useState(false);
+
+  const handleError = () => {
+    if (!isError) {
+      setImgSrc(fallbackSrc);
+      setIsError(true);
+    }
+  };
+
+  return (
+    <NextImage
+      alt={alt}
+      src={imgSrc}
+      {...props}
+      onError={handleError}
     />
   );
 } 

@@ -2,45 +2,49 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LucideIcon } from "lucide-react";
+import * as Icons from "lucide-react";
 import { cn } from "@/lib/utils";
-import { IconName, getIconComponent } from "@/lib/icons";
 
 interface NavItemProps {
   href: string;
   title: string;
-  description: string;
-  icon: IconName;
+  description?: string;
+  icon: string;
 }
 
 export function NavItem({ href, title, description, icon }: NavItemProps) {
   const pathname = usePathname();
   const isActive = pathname === href || pathname.startsWith(`${href}/`);
-  const Icon = getIconComponent(icon);
+  
+  // Créer dynamiquement l'icône à partir du nom fourni
+  const Icon = Icons[icon as keyof typeof Icons] as LucideIcon || Icons.Circle;
 
   return (
-    <Link 
+    <Link
       href={href}
       className={cn(
-        "flex items-start space-x-2 p-3 rounded-md transition-colors",
-        isActive 
-          ? "bg-primary text-primary-foreground" 
-          : "hover:bg-muted text-foreground hover:text-primary"
+        "admin-nav-item group flex flex-col rounded-lg px-3 py-2 transition-colors",
+        isActive
+          ? "bg-primary/10 text-primary"
+          : "text-muted-foreground hover:bg-primary/5 hover:text-primary"
       )}
     >
-      {Icon && (
+      <div className="flex items-center gap-3">
         <Icon className={cn(
-          "mt-px h-5 w-5",
-          isActive ? "text-primary-foreground" : "text-muted-foreground"
+          "h-5 w-5 transition-transform group-hover:scale-110",
+          isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
         )} />
-      )}
-      <div className="space-y-1">
-        <p className="text-sm font-medium leading-none">{title}</p>
-        <p className={cn(
-          "text-xs",
-          isActive ? "text-primary-foreground/90" : "text-muted-foreground"
-        )}>
-          {description}
-        </p>
+        <div>
+          <div className={cn("font-medium", isActive ? "text-primary" : "text-foreground")}>
+            {title}
+          </div>
+          {description && (
+            <p className="text-xs text-muted-foreground line-clamp-1">
+              {description}
+            </p>
+          )}
+        </div>
       </div>
     </Link>
   );

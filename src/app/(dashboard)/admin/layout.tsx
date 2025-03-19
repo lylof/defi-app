@@ -5,15 +5,19 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { 
   LogOut,
+  Settings,
+  HelpCircle,
+  Bell
 } from "lucide-react";
 import { NavItem } from "@/components/admin/nav-item";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
 import { PageHeader } from "@/components/admin/page-header";
+import "@/styles/admin.css";
 
 export const metadata: Metadata = {
-  title: "Administration",
-  description: "Interface d'administration",
+  title: "Administration | LPT Défis",
+  description: "Interface d'administration de la plateforme LPT Défis",
 };
 
 const navItems = [
@@ -72,92 +76,122 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Utiliser try/catch pour gérer les erreurs potentielles d'authentification
-  try {
-    // Récupération de la session de l'utilisateur
-    const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions);
 
-    // Vérification que l'utilisateur est connecté et est un administrateur
-    if (!session?.user) {
-      redirect("/login?callbackUrl=/admin");
-      return null; // Cette ligne ne sera jamais atteinte mais est nécessaire pour TypeScript
-    }
+  if (!session?.user || session.user.role !== "ADMIN") {
+    redirect("/login");
+  }
 
-    // Vérification supplémentaire du rôle admin
-    if (session.user.role !== "ADMIN") {
-      redirect("/");
-      return null; // Cette ligne ne sera jamais atteinte mais est nécessaire pour TypeScript
-    }
-
-    // Récupération des informations de l'utilisateur pour l'affichage
-    const userName = session.user.name || session.user.email || "Administrateur";
-
-    return (
-      <div className="bg-background h-screen flex flex-col">
-        {/* Header avec distinction visuelle */}
-        <header className="border-b bg-primary/10 h-16 flex items-center px-4">
-          <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center">
-              <span className="text-xl font-bold">LPT Défis</span>
-            </Link>
-            <span className="text-sm px-2 py-1 rounded-md bg-primary text-primary-foreground font-medium">
-              Mode Administration
-            </span>
-          </div>
-          
-          <div className="ml-auto flex items-center space-x-4">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-md bg-background/90">
-              <span className="text-sm font-medium text-primary">
-                {userName}
-              </span>
-              <Button variant="ghost" size="sm" asChild>
-                <Link 
-                  href="/logout" 
-                  className="flex items-center gap-2 text-destructive hover:text-destructive/90"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Déconnexion</span>
-                </Link>
-              </Button>
+  return (
+    <div className="admin-interface flex h-screen bg-background">
+      <aside className="admin-nav hidden md:flex md:flex-col md:w-80 p-6 border-r space-y-6 overflow-y-auto">
+        <div className="flex items-center justify-between mb-10">
+          <Link 
+            href="/admin" 
+            className="flex items-center space-x-2 text-primary font-bold text-2xl transition-transform hover:scale-105"
+          >
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+              LPT
             </div>
+            <span>Admin</span>
+          </Link>
+        </div>
+        
+        <div className="admin-profile-section mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="admin-profile-avatar w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xl font-semibold">
+              {session.user.name?.[0] || "A"}
+            </div>
+            <div>
+              <p className="font-semibold text-base">{session.user.name}</p>
+              <p className="text-sm text-muted-foreground">{session.user.email}</p>
+              <span className="admin-badge admin-badge-success mt-1">Administrateur</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="space-y-1">
+          <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-2 px-3">
+            Menu principal
+          </p>
+          <nav className="space-y-1">
+            {navItems.slice(0, 5).map((item) => (
+              <NavItem
+                key={item.href}
+                title={item.title}
+                description={item.description}
+                href={item.href}
+                icon={item.icon}
+              />
+            ))}
+          </nav>
+        </div>
+        
+        <div className="space-y-1 pt-4">
+          <p className="text-xs uppercase font-semibold text-muted-foreground tracking-wider mb-2 px-3">
+            Configuration
+          </p>
+          <nav className="space-y-1">
+            {navItems.slice(5).map((item) => (
+              <NavItem
+                key={item.href}
+                title={item.title}
+                description={item.description}
+                href={item.href}
+                icon={item.icon}
+              />
+            ))}
+          </nav>
+        </div>
+        
+        <div className="mt-auto pt-6 border-t">
+          <div className="flex flex-col gap-2">
+            <Button variant="ghost" size="sm" className="admin-btn admin-btn-secondary justify-start">
+              <HelpCircle className="mr-2 h-4 w-4" />
+              Centre d'aide
+            </Button>
+            <Button variant="ghost" size="sm" className="admin-btn admin-btn-secondary justify-start">
+              <Settings className="mr-2 h-4 w-4" />
+              Paramètres
+            </Button>
+            <Button variant="outline" size="sm" asChild className="admin-btn admin-btn-secondary justify-start">
+              <Link href="/api/auth/signout">
+                <LogOut className="mr-2 h-4 w-4" />
+                Déconnexion
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </aside>
+
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <header className="admin-header sticky top-0 z-30 flex h-16 items-center gap-4 border-b px-6">
+          <PageHeader />
+          
+          <div className="ml-auto flex items-center gap-4">
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-5 w-5" />
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-primary text-[10px] font-medium text-primary-foreground flex items-center justify-center">
+                3
+              </span>
+            </Button>
+            
+            <Button variant="ghost" size="sm" asChild className="hidden sm:flex gap-2 items-center">
+              <Link href="/">
+                Voir le site
+              </Link>
+            </Button>
           </div>
         </header>
-
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar administrative unique */}
-          <aside className="w-64 border-r bg-primary/5 overflow-y-auto">
-            <div className="p-4 border-b bg-primary/10">
-              <h2 className="font-semibold text-primary">Menu Administration</h2>
-            </div>
-            <nav className="space-y-1 p-4">
-              {navItems.map((item) => (
-                <NavItem
-                  key={item.href}
-                  href={item.href}
-                  title={item.title}
-                  description={item.description}
-                  icon={item.icon}
-                />
-              ))}
-            </nav>
-          </aside>
-
-          {/* Main content */}
-          <main className="flex-1 overflow-auto bg-background flex flex-col">
-            <PageHeader />
-            <div className="p-8 flex-1 overflow-auto">
-              {children}
-            </div>
-          </main>
-        </div>
-
-        <Toaster />
+        
+        <main className="admin-main flex-1 overflow-y-auto p-6 md:p-8 bg-background">
+          <div className="admin-fade-in mx-auto max-w-7xl">
+            {children}
+          </div>
+        </main>
       </div>
-    );
-  } catch (error) {
-    console.error("Erreur dans le layout d'administration:", error);
-    // Redirection vers la page d'authentification en cas d'erreur
-    redirect("/login?callbackUrl=/admin&error=AdminLayoutError");
-    return null; // Cette ligne ne sera jamais atteinte mais est nécessaire pour TypeScript
-  }
+      
+      <Toaster />
+    </div>
+  );
 } 

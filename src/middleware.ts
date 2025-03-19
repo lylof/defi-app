@@ -78,6 +78,72 @@ const authMiddleware = withAuth(
 );
 
 /**
+ * Applique les en-têtes de cache appropriés en fonction du type de contenu
+ */
+function applyCacheHeaders(request: NextRequest, response: NextResponse): NextResponse {
+  // Vérifier que la réponse est bien définie
+  if (!response) {
+    middlewareLogger.warn("applyCacheHeaders: Response non définie");
+    return NextResponse.next();
+  }
+
+  // S'assurer que les headers sont accessibles
+  try {
+    const pathname = request.nextUrl.pathname;
+
+    // Ajouter des headers de sécurité communs
+    response.headers.set("X-Content-Type-Options", "nosniff");
+    response.headers.set("X-XSS-Protection", "1; mode=block");
+    response.headers.set("X-Frame-Options", "DENY");
+    
+    // Ajouter des en-têtes de cache en fonction du type de contenu
+    if (pathname.startsWith("/api/")) {
+      // On exclut la route de gestion personnalisée du cache
+      if (pathname.startsWith("/api/cache-control")) {
+        return response;
+      }
+      // API routes généralement dynamiques
+      response.headers.set("Cache-Control", "no-store");
+    } else if (
+      pathname.match(/\.(jpg|jpeg|png|webp|avif|gif|svg)$/) ||
+      pathname.startsWith("/_next/image")
+    ) {
+      // Images - mise en cache longue durée
+      response.headers.set(
+        "Cache-Control",
+        "public, max-age=31536000, immutable"
+      );
+    } else if (
+      pathname.match(/\.(js|css)$/) ||
+      pathname.startsWith("/_next/static")
+    ) {
+      // Fichiers statiques - mise en cache avec revalidation
+      response.headers.set(
+        "Cache-Control",
+        "public, max-age=31536000, immutable"
+      );
+    } else if (pathname.startsWith("/examples/")) {
+      // Pages d'exemples - mise en cache courte avec revalidation
+      response.headers.set(
+        "Cache-Control",
+        "public, max-age=60, s-maxage=120, stale-while-revalidate=30"
+      );
+    } else {
+      // Pages normales - mise en cache modérée
+      response.headers.set(
+        "Cache-Control",
+        "public, max-age=300, s-maxage=600, stale-while-revalidate=60"
+      );
+    }
+  } catch (error) {
+    middlewareLogger.error("Erreur lors de l'application des en-têtes de cache", 
+      error instanceof Error ? error : new Error(String(error)));
+  }
+  
+  return response;
+}
+
+/**
  * Middleware principal qui combine tous les middlewares
  */
 export default async function middleware(request: NextRequest) {
@@ -87,36 +153,57 @@ export default async function middleware(request: NextRequest) {
     // Enregistrer les métriques de base pour toutes les requêtes
     const startTime = Date.now();
     
+    // Préparons la réponse qui sera potentiellement modifiée
+    let response: NextResponse | null = null;
+    
     // Middleware de cache de session pour les requêtes d'API de session
     if (pathname.startsWith('/api/auth/session')) {
       try {
-        return await sessionCacheMiddleware(request);
+        response = await sessionCacheMiddleware(request);
       } catch (error) {
         middlewareLogger.error('Erreur dans le middleware de cache de session', 
           error instanceof Error ? error : new Error(String(error)));
+        response = NextResponse.next();
       }
-    }
-    
+    } 
     // Middleware d'authentification pour les routes protégées
-    if (shouldApplyAuthMiddleware(request)) {
+    else if (shouldApplyAuthMiddleware(request)) {
       try {
         // @ts-ignore - withAuth attend NextRequest mais attend des options en second paramètre dans certains cas
-        return authMiddleware(request);
+        response = authMiddleware(request);
       } catch (error) {
         middlewareLogger.error('Erreur dans le middleware d\'authentification', 
           error instanceof Error ? error : new Error(String(error)));
+        response = NextResponse.next();
       }
+    } 
+    // Pour les autres routes, continuer normalement
+    else {
+      response = NextResponse.next();
     }
     
-    // Pour les autres routes, continuer normalement
-    return NextResponse.next();
+    // Vérifier que response est bien définie avant d'appliquer les en-têtes de cache
+    if (!response) {
+      middlewareLogger.warn('Réponse non définie après traitement des middlewares');
+      response = NextResponse.next();
+    }
+    
+    // Appliquer les en-têtes de cache à la réponse
+    const finalResponse = applyCacheHeaders(request, response);
+    
+    // Mesurer le temps d'exécution du middleware
+    const duration = Date.now() - startTime;
+    if (duration > 100) {
+      // Logger les performances lentes uniquement
+      middlewareLogger.debug(`Middleware exécuté en ${duration}ms pour ${pathname}`);
+    }
+    
+    return finalResponse;
   } catch (error) {
     // Logger l'erreur et continuer normalement pour éviter de bloquer l'application
     middlewareLogger.error('Erreur dans le middleware principal', 
       error instanceof Error ? error : new Error(String(error)));
     return NextResponse.next();
-  } finally {
-    // Enregistrer les métriques de fin de requête si nécessaire
   }
 }
 

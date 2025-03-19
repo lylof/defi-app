@@ -1,22 +1,21 @@
-import { Inter } from "next/font/google";
-import "./globals.css";
 import { Metadata } from "next";
-import Providers from "@/components/providers";
+import { fontSans } from "@/lib/fonts/font-sans";
+import { cn } from "@/lib/utils";
+import "./globals.css";
+import { SkipLink } from "@/components/ui/skip-link";
 import { initializeServer } from "@/lib/server-init";
 import { NotificationContainer } from "@/components/ui/notification-container";
-
-const inter = Inter({ subsets: ["latin"] });
+import { SWRProvider } from "@/lib/providers/SWRProvider";
+import Providers from "@/components/providers";
 
 export const metadata: Metadata = {
   title: "LPT Défis",
   description: "Plateforme de défis de développement",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
 };
 
-// Initialiser les données serveur au démarrage de l'application
-// Cette fonction est exécutée une seule fois au démarrage du serveur
-initializeServer().catch(error => {
-  console.error("Erreur d'initialisation:", error);
-});
+// Initialiser les données du serveur
+initializeServer();
 
 export default function RootLayout({
   children,
@@ -26,11 +25,19 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <head />
-      <body className={inter.className}>
-        <Providers>
-          <NotificationContainer />
-          {children}
-        </Providers>
+      <body className={cn(
+        "font-sans antialiased",
+        fontSans.variable
+      )}>
+        <SkipLink />
+        <main id="main-content">
+          <SWRProvider>
+            <Providers>
+              {children}
+              <NotificationContainer />
+            </Providers>
+          </SWRProvider>
+        </main>
       </body>
     </html>
   );

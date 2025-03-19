@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Save, X } from "lucide-react";
+import React from "react";
 
 interface EvaluationCriterion {
   id: string;
@@ -119,7 +120,7 @@ export function DetailedEvaluationForm({
     <div className="bg-white shadow-lg rounded-lg p-6 max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-semibold">Évaluation détaillée</h2>
-        <button
+        <button aria-label="Fermer"
           onClick={onCancel}
           className="text-gray-500 hover:text-gray-700"
           disabled={isSubmitting}
@@ -143,7 +144,7 @@ export function DetailedEvaluationForm({
           min="0"
           max="100"
           value={approvalThreshold}
-          onChange={(e) => setApprovalThreshold(Number(e.target.value))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApprovalThreshold(Number(e.target.value))}
           className="w-full p-2 border border-gray-300 rounded"
           disabled={isSubmitting}
         />
@@ -180,7 +181,7 @@ export function DetailedEvaluationForm({
                     max="10"
                     step="1"
                     value={evaluation.score}
-                    onChange={(e) => updateScore(criterion.id, Number(e.target.value))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateScore(criterion.id, Number(e.target.value))}
                     className="w-full mr-2"
                     disabled={isSubmitting}
                   />
@@ -196,7 +197,7 @@ export function DetailedEvaluationForm({
                 </label>
                 <textarea
                   value={evaluation.comment}
-                  onChange={(e) => updateComment(criterion.id, e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updateComment(criterion.id, e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded"
                   rows={2}
                   placeholder="Commentaire optionnel sur ce critère"

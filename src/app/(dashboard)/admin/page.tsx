@@ -10,10 +10,12 @@ import {
   Activity,
   Calendar,
   Tag,
-  FolderTree
+  FolderTree,
+  ArrowUpRight
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AdminLog } from "@/types/admin";
 
 export const metadata: Metadata = {
   title: "Dashboard Admin",
@@ -70,22 +72,26 @@ export default async function AdminDashboard() {
     ];
 
     return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {statCards.map((stat) => {
-            const Icon = stat.icon;
+      <div className="space-y-8">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {statCards.map((card) => {
+            const Icon = card.icon;
             return (
-              <Card key={stat.name}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {stat.name}
+              <Card key={card.name} className="admin-card overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between p-4">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {card.name}
                   </CardTitle>
-                  <Icon className="h-4 w-4 text-muted-foreground" />
+                  <Icon className="h-5 w-5 text-primary" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {stat.change}
+                <CardContent className="p-4 pt-0">
+                  <div className="text-2xl font-bold">{card.value}</div>
+                  <p className={`text-xs ${
+                    card.changeType === "positive" ? "text-green-600" : 
+                    card.changeType === "negative" ? "text-red-600" : 
+                    "text-muted-foreground"
+                  }`}>
+                    {card.change}
                   </p>
                 </CardContent>
               </Card>
@@ -94,7 +100,7 @@ export default async function AdminDashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-1">
+          <Card className="admin-card lg:col-span-1">
             <CardHeader>
               <CardTitle>Catégories Populaires</CardTitle>
             </CardHeader>
@@ -115,9 +121,10 @@ export default async function AdminDashboard() {
                     {stats.categories.withChallenges} catégories sur {stats.categories.total} sont utilisées par au moins un défi.
                   </div>
                   
-                  <Button variant="outline" size="sm" className="w-full" asChild>
-                    <Link href="/admin/categories">
+                  <Button variant="outline" size="sm" className="w-full admin-btn admin-btn-secondary" asChild>
+                    <Link href="/admin/categories" className="inline-flex items-center justify-center">
                       Gérer les catégories
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                 </div>
@@ -127,20 +134,20 @@ export default async function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-1">
+          <Card className="admin-card lg:col-span-1">
             <CardHeader>
               <CardTitle>Activités Récentes</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {logs && logs.length > 0 ? (
-                  logs.map((log) => (
+                  logs.map((log: AdminLog) => (
                     <div key={log.id} className="flex items-start space-x-3">
                       <div className="flex-shrink-0">
                         <div className="w-2 h-2 mt-2 bg-primary rounded-full" />
                       </div>
                       <div>
-                        <p className="text-sm">
+                        <p className="text-sm font-medium">
                           {log.action === "UPDATE_ROLE" 
                             ? "Modification de rôle"
                             : log.action === "BAN"
@@ -170,23 +177,23 @@ export default async function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-1">
+          <Card className="admin-card lg:col-span-1">
             <CardHeader>
               <CardTitle>Actions Rapides</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button className="w-full" asChild>
-                <Link href="/admin/challenges/new">
+              <Button className="w-full admin-btn admin-btn-primary" asChild>
+                <Link href="/admin/challenges/new" className="inline-flex items-center justify-center">
                   Créer un nouveau défi
                 </Link>
               </Button>
-              <Button className="w-full" variant="secondary" asChild>
-                <Link href="/admin/users">
+              <Button className="w-full admin-btn" variant="secondary" asChild>
+                <Link href="/admin/users" className="inline-flex items-center justify-center">
                   Gérer les utilisateurs
                 </Link>
               </Button>
-              <Button className="w-full" variant="outline" asChild>
-                <Link href="/admin/categories/new">
+              <Button className="w-full admin-btn admin-btn-secondary" variant="outline" asChild>
+                <Link href="/admin/categories/new" className="inline-flex items-center justify-center">
                   Ajouter une catégorie
                 </Link>
               </Button>

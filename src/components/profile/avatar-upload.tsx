@@ -84,7 +84,7 @@ export function AvatarUpload({ currentImage, onUpload }: AvatarUploadProps) {
             className="inline-flex items-center gap-2 text-sm text-primary hover:underline focus:outline-none disabled:opacity-50"
           >
             <Upload className="h-4 w-4" />
-            Changer l'avatar
+            Changer l&apos;avatar
           </button>
           <p className="text-xs text-gray-500">
             JPG, PNG ou GIF. 5MB maximum.
@@ -97,6 +97,7 @@ export function AvatarUpload({ currentImage, onUpload }: AvatarUploadProps) {
       )}
 
       <input
+        id="avatar-file-upload"
         ref={fileInputRef}
         type="file"
         accept="image/*"
@@ -105,4 +106,4 @@ export function AvatarUpload({ currentImage, onUpload }: AvatarUploadProps) {
       />
     </div>
   );
-} 
+}

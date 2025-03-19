@@ -17,6 +17,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  AdminFormContainer,
+  AdminFormHeader,
+  AdminFormContent,
+  AdminFormFooter,
+  AdminFormSection,
+} from "./admin-form-styles";
 
 // Schéma de validation pour le badge
 const badgeSchema = z.object({
@@ -85,100 +92,141 @@ export function BadgeForm({ badge }: BadgeFormProps = {}) {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nom du badge</FormLabel>
-              <FormControl>
-                <Input placeholder="Nom du badge" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Description du badge"
-                  className="min-h-32"
-                  {...field}
+    <AdminFormContainer>
+      <AdminFormHeader 
+        title={badge ? "Modifier un badge" : "Créer un nouveau badge"} 
+        description="Les badges récompensent les utilisateurs pour leurs accomplissements."
+      />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <AdminFormContent>
+            <AdminFormSection title="Informations générales" description="Détails de base du badge">
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom du badge</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Nom du badge" 
+                          className="admin-input" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
-        <FormField
-          control={form.control}
-          name="image"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>URL de l&apos;image (optionnelle)</FormLabel>
-              <FormControl>
-                <Input placeholder="https://exemple.com/image.png" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="points"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Points</FormLabel>
-              <FormControl>
-                <Input type="number" min="0" step="1" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="condition"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Condition d&apos;obtention</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Condition d&apos;obtention du badge (ex: Compléter 5 défis)"
-                  className="min-h-32"
-                  {...field}
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Description du badge"
+                          className="admin-textarea min-h-32"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+              </div>
+            </AdminFormSection>
 
-        <div className="flex justify-end space-x-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.push("/admin/badges")}
-            disabled={isSubmitting}
-          >
-            Annuler
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Enregistrement..." : badge ? "Mettre à jour" : "Créer"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+            <div className="my-6 h-px bg-gray-100 dark:bg-gray-800"></div>
+
+            <AdminFormSection title="Apparence et valeur" description="Image et points attribués">
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL de l&apos;image (optionnelle)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="https://exemple.com/image.png" 
+                          className="admin-input"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="points"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Points</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="0" 
+                          step="1" 
+                          className="admin-input"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </AdminFormSection>
+
+            <div className="my-6 h-px bg-gray-100 dark:bg-gray-800"></div>
+
+            <AdminFormSection title="Conditions d'obtention" description="Comment les utilisateurs peuvent obtenir ce badge">
+              <FormField
+                control={form.control}
+                name="condition"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Condition d&apos;obtention</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Condition d&apos;obtention du badge (ex: Compléter 5 défis)"
+                        className="admin-textarea min-h-32"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </AdminFormSection>
+          </AdminFormContent>
+
+          <AdminFormFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/admin/badges")}
+              disabled={isSubmitting}
+              className="admin-btn admin-btn-secondary"
+            >
+              Annuler
+            </Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="admin-btn admin-btn-primary"
+            >
+              {isSubmitting ? "Enregistrement..." : badge ? "Mettre à jour" : "Créer"}
+            </Button>
+          </AdminFormFooter>
+        </form>
+      </Form>
+    </AdminFormContainer>
   );
 } 

@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { AccessibleFormField } from "@/components/ui/form-field";
 
 export interface ChallengeFilters {
   search: string;
@@ -79,16 +80,22 @@ export function ChallengeFilters({
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        {/* Recherche */}
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="search"
-            placeholder="Rechercher un défi..."
-            className="w-full rounded-md border pl-9 pr-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            value={filters.search}
-            onChange={(e) => updateFilters({ search: e.target.value })}
-          />
+        {/* Champ de recherche avec accessibilité améliorée */}
+        <div className="mb-4">
+          <AccessibleFormField
+            id="challenge-search"
+            label="Recherche de défis"
+            className="mb-4"
+          >
+            <input
+              type="search"
+              placeholder="Rechercher un défi..."
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md 
+              focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-800"
+              value={filters.search}
+              onChange={(e) => updateFilters({ search: e.target.value })}
+            />
+          </AccessibleFormField>
         </div>
 
         {/* Filtre par catégorie */}
@@ -249,7 +256,7 @@ export function ChallengeFilters({
                       className="text-primary"
                     />
                     <Label htmlFor="status-active" className="text-sm font-normal">
-                      Actifs
+                      En cours uniquement
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -263,14 +270,19 @@ export function ChallengeFilters({
                       className="text-primary"
                     />
                     <Label htmlFor="status-ended" className="text-sm font-normal">
-                      Terminés
+                      Terminés uniquement
                     </Label>
                   </div>
                 </div>
               </div>
 
-              <div className="border-t pt-2 flex justify-between">
-                <Button variant="ghost" size="sm" onClick={resetFilters}>
+              <div className="pt-2 border-t flex justify-between">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={resetFilters}
+                  disabled={!getActiveFiltersCount()}
+                >
                   Réinitialiser
                 </Button>
                 <Button
@@ -285,72 +297,33 @@ export function ChallengeFilters({
         </Popover>
       </div>
 
-      {/* Filtres actifs */}
-      {getActiveFiltersCount() > 0 && (
-        <div className="flex flex-wrap gap-2 pt-1">
-          {filters.search && (
-            <Badge variant="outline" className="flex gap-1 items-center">
-              Recherche: {filters.search}
-              <button
-                className="ml-1 hover:text-destructive"
-                onClick={() => updateFilters({ search: "" })}
-              >
-                ×
-              </button>
-            </Badge>
-          )}
-          
-          {filters.categories.length > 0 && categories.map((category) => 
-            filters.categories.includes(category.id) && (
-              <Badge key={category.id} variant="outline" className="flex gap-1 items-center">
-                {category.name}
+      {filters.categories.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <span className="text-sm font-medium mr-1">Catégories:</span>
+          {filters.categories.map((categoryId) => {
+            const category = categories.find(c => c.id === categoryId);
+            return (
+              <Badge key={categoryId} variant="secondary" className="flex items-center gap-1">
+                {category?.name || "Inconnue"}
                 <button
-                  className="ml-1 hover:text-destructive"
-                  onClick={() => handleCategoryChange(category.id, false)}
+                  type="button"
+                  onClick={() => handleCategoryChange(categoryId, false)}
+                  className="ml-1 text-xs font-medium hover:opacity-80"
+                  aria-label={`Supprimer ${category?.name || "catégorie"}`}
                 >
-                  ×
+                  ✕
                 </button>
               </Badge>
-            )
-          )}
-          
-          {filters.status !== "all" && (
-            <Badge variant="outline" className="flex gap-1 items-center">
-              Statut: {filters.status === "active" ? "Actifs" : "Terminés"}
-              <button
-                className="ml-1 hover:text-destructive"
-                onClick={() => updateFilters({ status: "all" })}
-              >
-                ×
-              </button>
-            </Badge>
-          )}
-          
-          {filters.sortBy !== "newest" && (
-            <Badge variant="outline" className="flex gap-1 items-center">
-              Tri: {
-                filters.sortBy === "oldest" ? "Plus anciens" : 
-                filters.sortBy === "points" ? "Points" : "Popularité"
-              }
-              <button
-                className="ml-1 hover:text-destructive"
-                onClick={() => updateFilters({ sortBy: "newest" })}
-              >
-                ×
-              </button>
-            </Badge>
-          )}
-          
-          {getActiveFiltersCount() > 1 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs h-6 px-2" 
-              onClick={resetFilters}
-            >
-              Effacer tout
-            </Button>
-          )}
+            );
+          })}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => updateFilters({ categories: [] })}
+            className="text-xs"
+          >
+            Effacer tout
+          </Button>
         </div>
       )}
     </div>
